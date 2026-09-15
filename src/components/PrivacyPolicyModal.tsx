@@ -6,7 +6,6 @@ import {
   Database,
   FileCheck,
   Scale,
-  ExternalLink,
   CheckCircle2,
   AlertCircle,
   Cpu,
@@ -176,15 +175,10 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
 
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200/80 bg-slate-50/80 px-6 py-4 dark:border-slate-800/80 dark:bg-slate-900/80">
-          <a
-            href="https://github.com/mukteshwar845/ConvertX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
-          >
-            <span>View Source on GitHub</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <span>100% Client-Side Sandbox • Zero Remote Data Retention</span>
+          </div>
 
           <button
             onClick={onClose}
