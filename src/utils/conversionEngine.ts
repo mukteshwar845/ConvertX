@@ -2,23 +2,29 @@ import mammoth from 'mammoth';
 import { jsPDF } from 'jspdf';
 import PptxGenJS from 'pptxgenjs';
 import JSZip from 'jszip';
-import { SupportedFormat, TargetFormat } from '../types';
+import {
+  SupportedFormat,
+  TargetFormat,
+  ConversionOptions,
+  FidelityReport,
+  InternalDocumentModel,
+  ConversionResult,
+} from '../types';
 import { createDocxFromContent } from './docxGenerator';
+import { detectFileFormat, getCompatibleTargets } from './fileDetector';
+import { parseDocumentToIDM } from './documentParser';
+import { evaluateDocumentFidelity } from './fidelityEngine';
+import { convertSpreadsheet } from './spreadsheetEngine';
+import { convertImage } from './imageConverter';
 
 export interface ConversionProgressCallback {
   (progress: number, statusText: string): void;
 }
 
-export interface ConversionResult {
-  blob: Blob;
-  name: string;
-  size: number;
-  ocrUsed?: boolean;
-  preview: {
-    type: 'html' | 'text' | 'pdf' | 'image';
-    content: string; // HTML string, raw text, or blob URL
-  };
-}
+export type { ConversionResult };
+
+// In-memory SHA-256 conversion cache
+const conversionCache = new Map<string, ConversionResult>();
 
 /**
  * Detects format from file extension or MIME type
@@ -26,53 +32,59 @@ export interface ConversionResult {
 export function detectFormat(file: File): SupportedFormat {
   const name = file.name.toLowerCase();
   if (name.endsWith('.docx')) return 'docx';
+  if (name.endsWith('.doc')) return 'doc';
   if (name.endsWith('.pdf')) return 'pdf';
-  if (name.endsWith('.pptx') || name.endsWith('.ppt')) return 'pptx';
+  if (name.endsWith('.pptx')) return 'pptx';
+  if (name.endsWith('.ppt')) return 'ppt';
+  if (name.endsWith('.odp')) return 'odp';
+  if (name.endsWith('.xlsx')) return 'xlsx';
+  if (name.endsWith('.xls')) return 'xls';
+  if (name.endsWith('.csv')) return 'csv';
+  if (name.endsWith('.ods')) return 'ods';
+  if (name.endsWith('.odt')) return 'odt';
+  if (name.endsWith('.rtf')) return 'rtf';
   if (name.endsWith('.txt')) return 'txt';
   if (name.endsWith('.md') || name.endsWith('.markdown')) return 'md';
   if (name.endsWith('.html') || name.endsWith('.htm')) return 'html';
   if (name.endsWith('.png')) return 'png';
   if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'jpg';
+  if (name.endsWith('.webp')) return 'webp';
+  if (name.endsWith('.svg')) return 'svg';
+  if (name.endsWith('.bmp')) return 'bmp';
+  if (name.endsWith('.gif')) return 'gif';
+  if (name.endsWith('.tiff') || name.endsWith('.tif')) return 'tiff';
+  if (name.endsWith('.json')) return 'json';
+  if (name.endsWith('.xml')) return 'xml';
 
   // MIME fallback
   if (file.type.includes('word')) return 'docx';
   if (file.type.includes('pdf')) return 'pdf';
   if (file.type.includes('presentation') || file.type.includes('powerpoint')) return 'pptx';
+  if (file.type.includes('spreadsheet') || file.type.includes('excel')) return 'xlsx';
+  if (file.type.includes('csv')) return 'csv';
   if (file.type.includes('image/png')) return 'png';
   if (file.type.includes('image/jpeg')) return 'jpg';
+  if (file.type.includes('image/webp')) return 'webp';
+  if (file.type.includes('image/svg')) return 'svg';
   if (file.type.includes('text/html')) return 'html';
   if (file.type.includes('text/markdown')) return 'md';
+  if (file.type.includes('json')) return 'json';
+  if (file.type.includes('xml')) return 'xml';
   return 'txt';
 }
 
 /**
- * Get available target formats for a given source format
+ * Get available target formats for a given source format using the Universal Conversion Graph
  */
 export function getAvailableTargets(source: SupportedFormat, ocrEnabled: boolean = false): TargetFormat[] {
-  switch (source) {
-    case 'docx':
-      return ['pdf', 'pptx', 'txt', 'html', 'md'];
-    case 'pdf':
-      return ['docx', 'txt', 'html', 'pptx', 'md'];
-    case 'pptx':
-      return ['pdf', 'txt', 'html', 'docx', 'md'];
-    case 'txt':
-    case 'md':
-      return ['pdf', 'docx', 'pptx', 'html'];
-    case 'html':
-      return ['pdf', 'docx', 'txt', 'md'];
-    case 'png':
-    case 'jpg':
-      return ocrEnabled ? ['docx', 'txt', 'pdf', 'html', 'pptx', 'md'] : ['pdf', 'docx', 'txt'];
-    default:
-      return ['pdf', 'txt'];
-  }
+  return getCompatibleTargets(source, ocrEnabled);
 }
+
 
 /**
  * Extract clean HTML and text from DOCX preserving interior formatting
  */
-async function parseDocx(arrayBuffer: ArrayBuffer) {
+export async function parseDocx(arrayBuffer: ArrayBuffer) {
   const result = await mammoth.convertToHtml(
     { arrayBuffer },
     {
@@ -97,7 +109,7 @@ async function parseDocx(arrayBuffer: ArrayBuffer) {
 /**
  * Render structured HTML to a pristine multi-page PDF preserving font sizes, headings, margins
  */
-function renderHtmlToPdf(html: string, title: string): { blob: Blob; url: string } {
+export function renderHtmlToPdf(html: string, title: string): { blob: Blob; url: string } {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'pt',
@@ -243,7 +255,7 @@ function renderHtmlToPdf(html: string, title: string): { blob: Blob; url: string
 /**
  * Convert structured content to PowerPoint presentation slides (.pptx)
  */
-async function renderContentToPptx(
+export async function renderContentToPptx(
   title: string,
   sections: Array<{ title: string; bullets: string[]; subtitle?: string }>
 ): Promise<Blob> {
@@ -356,7 +368,7 @@ async function renderContentToPptx(
 /**
  * Parse PPTX slides using JSZip
  */
-async function parsePptx(buffer: ArrayBuffer): Promise<{ title: string; slides: Array<{ title: string; content: string[] }> }> {
+export async function parsePptx(buffer: ArrayBuffer): Promise<{ title: string; slides: Array<{ title: string; content: string[] }> }> {
   const zip = new JSZip();
   await zip.loadAsync(buffer);
 
@@ -396,7 +408,7 @@ async function parsePptx(buffer: ArrayBuffer): Promise<{ title: string; slides: 
 /**
  * Extract text chunks and structure from PDF buffer
  */
-async function parsePdfText(buffer: ArrayBuffer): Promise<{ text: string; paragraphs: string[] }> {
+export async function parsePdfText(buffer: ArrayBuffer): Promise<{ text: string; paragraphs: string[] }> {
   const bytes = new Uint8Array(buffer);
   const textDecoder = new TextDecoder('utf-8', { fatal: false });
   const rawString = textDecoder.decode(bytes);
@@ -440,11 +452,6 @@ async function parsePdfText(buffer: ArrayBuffer): Promise<{ text: string; paragr
     text: extracted.trim(),
     paragraphs: paragraphs.length > 0 ? paragraphs : ['Extracted document content successfully.'],
   };
-}
-
-export interface ConversionOptions {
-  ocrEnabled?: boolean;
-  onProgress?: ConversionProgressCallback;
 }
 
 /**
@@ -629,18 +636,25 @@ export async function convertDocument(
   onProgressOrOptions?: ConversionProgressCallback | ConversionOptions,
   maybeOptions?: { ocrEnabled?: boolean }
 ): Promise<ConversionResult> {
+  const { universalConvertDocument } = await import('./universalConverter');
   let onProgress: ConversionProgressCallback | undefined;
-  let ocrEnabled = false;
+  let options: ConversionOptions = {};
 
   if (typeof onProgressOrOptions === 'function') {
     onProgress = onProgressOrOptions;
     if (maybeOptions?.ocrEnabled) {
-      ocrEnabled = maybeOptions.ocrEnabled;
+      options.ocrEnabled = maybeOptions.ocrEnabled;
     }
   } else if (onProgressOrOptions && typeof onProgressOrOptions === 'object') {
-    onProgress = onProgressOrOptions.onProgress;
-    ocrEnabled = !!onProgressOrOptions.ocrEnabled;
+    onProgress = (onProgressOrOptions as any).onProgress;
+    options = { ...onProgressOrOptions };
   }
+
+  return universalConvertDocument(file, targetFormat, options, onProgress);
+}
+
+// Legacy fallback methods retained for backward compatibility
+async function _legacyConvert(file: File, targetFormat: TargetFormat, onProgress?: ConversionProgressCallback, ocrEnabled: boolean = false) {
   const sourceFormat = detectFormat(file);
   const baseName = file.name.replace(/\.[^/.]+$/, '');
   const outName = `${baseName}.${targetFormat}`;

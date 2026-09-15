@@ -28,11 +28,13 @@ import { CloudVaultView } from './components/CloudVaultView';
 import { SecurityView } from './components/SecurityView';
 import { PreviewModal } from './components/PreviewModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
+import { ToastContainer, ToastMessage } from './components/Toast';
 import {
   detectFormat,
   convertDocument,
   getAvailableTargets,
 } from './utils/conversionEngine';
+import { clearConversionCache } from './utils/universalConverter';
 import {
   encryptBuffer,
   decryptBuffer,
@@ -109,10 +111,35 @@ export default function App() {
 
   // Modals
   const [previewItem, setPreviewItem] = useState<ConversionItem | HistoryRecord | null>(null);
+  const [previewMode, setPreviewMode] = useState<'preview' | 'compare' | 'fidelity'>('preview');
   const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isConvertingBatch, setIsConvertingBatch] = useState<boolean>(false);
+
+  // In-app non-blocking Toast Notifications (iframe resilient)
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = (
+    type: 'success' | 'error' | 'warning' | 'info',
+    message: string,
+    title?: string
+  ) => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    setToasts((prev) => [...prev, { id, type, message, title }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleOpenPreview = (
+    item: ConversionItem | HistoryRecord,
+    mode: 'preview' | 'compare' | 'fidelity' = 'preview'
+  ) => {
+    setPreviewItem(item);
+    setPreviewMode(mode);
+  };
 
   // Sync dark class on documentElement
   useEffect(() => {
@@ -195,7 +222,28 @@ export default function App() {
 
   // Add files to batch queue
   const handleFilesAdded = (files: File[]) => {
-    const newItems: ConversionItem[] = files.map((file) => {
+    const validFiles: File[] = [];
+    let emptyCount = 0;
+
+    for (const f of files) {
+      if (f.size === 0) {
+        emptyCount++;
+      } else {
+        validFiles.push(f);
+      }
+    }
+
+    if (emptyCount > 0) {
+      addToast(
+        'warning',
+        `${emptyCount} empty file${emptyCount > 1 ? 's were' : ' was'} skipped because the content is 0 bytes.`,
+        'Zero-Byte Files Skipped'
+      );
+    }
+
+    if (validFiles.length === 0) return;
+
+    const newItems: ConversionItem[] = validFiles.map((file) => {
       const source = detectFormat(file);
       const targets = getAvailableTargets(source, ocrEnabled);
       const target = targets.includes(globalTarget) ? globalTarget : targets[0] || 'pdf';
@@ -216,6 +264,11 @@ export default function App() {
 
     setQueue((prev) => [...prev, ...newItems]);
     setActiveTab('converter');
+    addToast(
+      'info',
+      `Queued ${newItems.length} file${newItems.length > 1 ? 's' : ''} for conversion.`,
+      'Batch Ready'
+    );
   };
 
   // Toggle OCR across current queue and future uploads
@@ -303,6 +356,9 @@ export default function App() {
                 checksum,
                 ocrExtracted: result.ocrUsed,
                 extractedPreview: result.preview,
+                fidelity: result.fidelity,
+                sourceModel: result.sourceModel,
+                cached: result.cached,
               }
             : i
         )
@@ -322,6 +378,8 @@ export default function App() {
         encrypted: autoEncrypt,
         synced: false,
         ocrExtracted: result.ocrUsed,
+        cached: result.cached,
+        fidelityScore: result.fidelity?.overallScore,
         previewSnippet: result.preview.type === 'text' ? result.preview.content.slice(0, 300) : undefined,
       };
       setHistory((prev) => [histRecord, ...prev]);
@@ -415,11 +473,12 @@ export default function App() {
         const mimeType = doc.format === 'pdf' ? 'application/pdf' : 'application/octet-stream';
         const blob = new Blob([decryptedBuf], { type: mimeType });
         triggerDownload(blob, doc.name);
+        addToast('success', `Decrypted and downloaded "${doc.name}".`, 'File Decrypted');
       } else {
-        alert('Document is missing encryption payload or already expired.');
+        addToast('warning', 'Document is missing encryption payload or already expired.', 'Download Notice');
       }
     } catch (err: any) {
-      alert(`Decryption failed: Please ensure your Master Encryption Key matches. (${err.message})`);
+      addToast('error', `Decryption failed: Please ensure your Master Encryption Key matches. (${err.message})`, 'Decryption Error');
     }
   };
 
@@ -430,6 +489,7 @@ export default function App() {
         method: 'DELETE',
       });
       fetchCloudDocs();
+      addToast('info', 'Document removed from cloud sync room.', 'Cloud Sync');
     } catch (err) {
       console.error('Failed to delete cloud doc:', err);
     }
@@ -443,6 +503,7 @@ export default function App() {
         method: 'POST',
       });
       fetchCloudDocs();
+      addToast('info', 'All documents cleared from cloud sync room.', 'Room Reset');
     } catch (err) {
       console.error('Failed to clear cloud room:', err);
     }
@@ -480,6 +541,7 @@ export default function App() {
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     triggerDownload(zipBlob, `DocuConvert_Batch_${Date.now()}.zip`);
+    addToast('success', `Created ZIP archive with ${completedItems.length} files.`, 'Batch Download');
   };
 
   // Download record from history
@@ -498,16 +560,31 @@ export default function App() {
       return;
     }
 
-    alert('The converted file memory was cleared. You can re-convert the file anytime from the converter tab.');
+    addToast(
+      'info',
+      'The converted file memory was released. You can re-convert the file anytime from the converter tab.',
+      'Memory Released'
+    );
   };
 
   // Remove from queue
   const handleRemoveQueueItem = (id: string) => {
+    const item = queue.find((i) => i.id === id);
+    if (item?.convertedUrl) {
+      URL.revokeObjectURL(item.convertedUrl);
+    }
     setQueue((prev) => prev.filter((i) => i.id !== id));
   };
 
   const handleClearQueue = () => {
+    queue.forEach((item) => {
+      if (item.convertedUrl) {
+        URL.revokeObjectURL(item.convertedUrl);
+      }
+    });
     setQueue([]);
+    clearConversionCache();
+    addToast('info', 'Queue cleared and memory released.', 'Queue Reset');
   };
 
   const handleDeleteHistoryRecord = (id: string) => {
@@ -620,7 +697,8 @@ export default function App() {
                       onTargetChange={handleTargetChange}
                       onConvertSingle={convertSingle}
                       onDownload={handleDownloadItem}
-                      onPreview={(itm) => setPreviewItem(itm)}
+                      onPreview={(itm) => handleOpenPreview(itm, 'preview')}
+                      onCompare={(itm) => handleOpenPreview(itm, 'compare')}
                       onSyncToCloud={syncItemToCloud}
                       onRemove={handleRemoveQueueItem}
                     />
@@ -710,6 +788,7 @@ export default function App() {
       {/* Preview Modal */}
       <PreviewModal
         item={previewItem}
+        initialMode={previewMode}
         onClose={() => setPreviewItem(null)}
         onDownload={(itm) => {
           if ('convertedBlob' in itm && itm.convertedBlob) {
@@ -728,6 +807,9 @@ export default function App() {
         onNativeInstall={handleNativeInstall}
         canNativeInstall={!!deferredPrompt}
       />
+
+      {/* Toast Notification Container */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-900 transition-colors">

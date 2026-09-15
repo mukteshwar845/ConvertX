@@ -126,7 +126,7 @@ Rules:
 3. Transcribe faithfully without altering wording, numbers, or dates.
 4. Output ONLY the raw extracted document markdown text. DO NOT write conversational filler, intro remarks (e.g. "Here is the extracted text:"), or summary disclaimers.`;
 
-    const candidateModels = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+    const candidateModels = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
     let extractedText = '';
     let selectedModel = '';
     let lastError: any = null;
@@ -162,23 +162,40 @@ Rules:
       throw lastError;
     }
 
+    // Sanitize fileName to prevent path injection / XSS
+    const safeFileName = typeof fileName === 'string'
+      ? fileName.replace(/[/\\?%*:|"<>]/g, '').trim().slice(0, 120)
+      : 'document';
+
     res.json({
       success: true,
       text: extractedText.trim(),
       model: selectedModel,
-      fileName: fileName || 'document',
+      fileName: safeFileName || 'document',
     });
   } catch (err: any) {
     console.error('Error during OCR processing:', err);
+    // Sanitize error message to prevent server path leakage
+    const rawMsg = String(err?.message || '');
+    const cleanMsg = rawMsg.replace(/\/[\w./-]+/g, '[path]').slice(0, 200);
     res.status(500).json({
-      error: err.message || 'Optical Character Recognition processing failed.',
+      error: cleanMsg || 'Optical Character Recognition processing failed.',
     });
   }
 });
 
 // Cloud Sync Room retrieval
 app.get('/api/sync/:roomCode', (req, res) => {
-  const roomCode = req.params.roomCode.toUpperCase().trim();
+  const roomCode = String(req.params.roomCode || '')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .toUpperCase()
+    .trim()
+    .slice(0, 32);
+
+  if (!roomCode) {
+    return res.status(400).json({ error: 'Invalid room code format' });
+  }
+
   const room = syncRooms.get(roomCode);
   if (!room) {
     return res.json({
@@ -199,12 +216,28 @@ app.get('/api/sync/:roomCode', (req, res) => {
 
 // Cloud Sync Document Upload / Push
 app.post('/api/sync/:roomCode', (req, res) => {
-  const roomCode = req.params.roomCode.toUpperCase().trim();
+  const roomCode = String(req.params.roomCode || '')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .toUpperCase()
+    .trim()
+    .slice(0, 32);
+
+  if (!roomCode) {
+    return res.status(400).json({ error: 'Invalid room code format' });
+  }
+
   const doc: SyncedDocument = req.body;
 
-  if (!doc || !doc.name || !doc.id) {
+  if (!doc || typeof doc !== 'object' || !doc.name || !doc.id) {
     return res.status(400).json({ error: 'Invalid document payload' });
   }
+
+  // Sanitize document fields
+  doc.id = String(doc.id).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  doc.name = String(doc.name).replace(/[/\\?%*:|"<>]/g, '').slice(0, 150);
+  doc.originalName = String(doc.originalName || doc.name).replace(/[/\\?%*:|"<>]/g, '').slice(0, 150);
+  doc.format = String(doc.format || 'pdf').replace(/[^a-z0-9]/gi, '').slice(0, 10);
+  doc.size = typeof doc.size === 'number' ? Math.max(0, doc.size) : 0;
 
   let room = syncRooms.get(roomCode);
   if (!room) {
@@ -243,8 +276,18 @@ app.post('/api/sync/:roomCode', (req, res) => {
 
 // Delete document from sync room
 app.delete('/api/sync/:roomCode/:docId', (req, res) => {
-  const roomCode = req.params.roomCode.toUpperCase().trim();
-  const docId = req.params.docId;
+  const roomCode = String(req.params.roomCode || '')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .toUpperCase()
+    .trim()
+    .slice(0, 32);
+
+  const docId = String(req.params.docId || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+
+  if (!roomCode || !docId) {
+    return res.status(400).json({ error: 'Invalid room or document identifier' });
+  }
+
   const room = syncRooms.get(roomCode);
   if (!room) {
     return res.status(404).json({ error: 'Room not found' });
@@ -257,7 +300,16 @@ app.delete('/api/sync/:roomCode/:docId', (req, res) => {
 
 // Clear all documents in sync room
 app.post('/api/sync/:roomCode/clear', (req, res) => {
-  const roomCode = req.params.roomCode.toUpperCase().trim();
+  const roomCode = String(req.params.roomCode || '')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .toUpperCase()
+    .trim()
+    .slice(0, 32);
+
+  if (!roomCode) {
+    return res.status(400).json({ error: 'Invalid room code format' });
+  }
+
   const room = syncRooms.get(roomCode);
   if (room) {
     room.documents = [];

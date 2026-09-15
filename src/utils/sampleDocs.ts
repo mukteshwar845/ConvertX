@@ -274,3 +274,31 @@ export async function createSampleScannedPdfFile(): Promise<File> {
   });
 }
 
+export function createSampleCsvFile(): File {
+  const csvContent = `Department,Q1 Revenue,Q2 Revenue,Growth,Status
+Engineering,1250000,1420000,13.6%,Active
+Product Management,850000,980000,15.3%,Active
+Marketing & Growth,620000,710000,14.5%,Active
+Design Systems,340000,390000,14.7%,Active
+Customer Operations,450000,480000,6.7%,Active
+Total / Aggregate,3510000,3980000,13.4%,Target Exceeded`;
+  return new File([csvContent], 'Financial_Q2_Performance.csv', {
+    type: 'text/csv;charset=utf-8',
+  });
+}
+
+export function createSampleJsonFile(): File {
+  const jsonContent = JSON.stringify(
+    [
+      { id: 'DOC-101', name: 'Global Compliance Spec', pages: 14, category: 'Legal', status: 'Approved' },
+      { id: 'DOC-102', name: 'System Architecture v2', pages: 28, category: 'Engineering', status: 'In Review' },
+      { id: 'DOC-103', name: 'Quarterly Financial Audit', pages: 42, category: 'Finance', status: 'Verified' },
+    ],
+    null,
+    2
+  );
+  return new File([jsonContent], 'Inventory_Records.json', {
+    type: 'application/json',
+  });
+}
+

@@ -18,8 +18,12 @@ import {
   Trash2,
   RefreshCw,
   ScanText,
+  Zap,
+  Sparkles,
+  Columns2,
+  Layers,
 } from 'lucide-react';
-import { ConversionItem, TargetFormat } from '../types';
+import { ConversionItem, TargetFormat, SupportedFormat } from '../types';
 import { getAvailableTargets } from '../utils/conversionEngine';
 
 interface ConversionCardProps {
@@ -28,22 +32,25 @@ interface ConversionCardProps {
   onConvertSingle: (id: string) => void;
   onDownload: (item: ConversionItem) => void;
   onPreview: (item: ConversionItem) => void;
+  onCompare?: (item: ConversionItem) => void;
   onSyncToCloud: (item: ConversionItem) => void;
   onRemove: (id: string) => void;
 }
 
-interface FormatVisualConfig {
+export interface FormatVisualConfig {
   label: string;
   shortLabel: string;
-  category: string;
+  category: 'Document' | 'Spreadsheet' | 'Presentation' | 'Image' | 'Data' | 'Code' | 'Text';
   icon: React.ReactNode;
   containerClass: string;
   badgeClass: string;
   accentText: string;
+  borderClass: string;
 }
 
-const getFormatVisual = (format: string): FormatVisualConfig => {
-  switch (format) {
+export const getFormatVisual = (format: string): FormatVisualConfig => {
+  const f = format.toLowerCase();
+  switch (f) {
     case 'pdf':
       return {
         label: 'PDF Document',
@@ -51,106 +58,167 @@ const getFormatVisual = (format: string): FormatVisualConfig => {
         category: 'Document',
         icon: <FileText className="h-6 w-6 text-rose-600 dark:text-rose-400" />,
         containerClass:
-          'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300',
+          'border-rose-200 bg-rose-50/90 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300',
         badgeClass:
-          'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/60',
+          'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200 border border-rose-200/80 dark:border-rose-800/80',
+        borderClass: 'hover:border-rose-300 dark:hover:border-rose-800',
         accentText: 'text-rose-600 dark:text-rose-400',
       };
     case 'docx':
+    case 'doc':
       return {
-        label: 'Word Document',
-        shortLabel: 'DOCX',
-        category: 'Word Processing',
+        label: f === 'doc' ? 'Word 97-2003' : 'Word Document',
+        shortLabel: f.toUpperCase(),
+        category: 'Document',
         icon: <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
         containerClass:
-          'border-blue-200 bg-blue-50/80 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300',
+          'border-blue-200 bg-blue-50/90 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300',
         badgeClass:
-          'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60',
+          'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200/80 dark:border-blue-800/80',
+        borderClass: 'hover:border-blue-300 dark:hover:border-blue-800',
         accentText: 'text-blue-600 dark:text-blue-400',
       };
     case 'pptx':
+    case 'ppt':
+    case 'odp':
       return {
-        label: 'PowerPoint Slides',
-        shortLabel: 'PPTX',
+        label: f === 'odp' ? 'OpenDocument Slides' : 'PowerPoint Slides',
+        shortLabel: f.toUpperCase(),
         category: 'Presentation',
         icon: <Presentation className="h-6 w-6 text-amber-600 dark:text-amber-400" />,
         containerClass:
-          'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
+          'border-amber-200 bg-amber-50/90 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
         badgeClass:
-          'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60',
+          'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/80',
+        borderClass: 'hover:border-amber-300 dark:hover:border-amber-800',
         accentText: 'text-amber-600 dark:text-amber-400',
       };
-    case 'png':
+    case 'xlsx':
+    case 'xls':
+    case 'ods':
       return {
-        label: 'PNG Image',
-        shortLabel: 'PNG',
-        category: 'Raster Image',
-        icon: <ImageIcon className="h-6 w-6 text-teal-600 dark:text-teal-400" />,
+        label: f === 'ods' ? 'OpenDocument Sheet' : f === 'xls' ? 'Excel 97-2003' : 'Excel Workbook',
+        shortLabel: f.toUpperCase(),
+        category: 'Spreadsheet',
+        icon: <FileSpreadsheet className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />,
         containerClass:
-          'border-teal-200 bg-teal-50/80 text-teal-700 dark:border-teal-900/60 dark:bg-teal-950/40 dark:text-teal-300',
+          'border-emerald-200 bg-emerald-50/90 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
         badgeClass:
-          'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60',
+          'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-800/80',
+        borderClass: 'hover:border-emerald-300 dark:hover:border-emerald-800',
+        accentText: 'text-emerald-600 dark:text-emerald-400',
+      };
+    case 'csv':
+      return {
+        label: 'CSV Data Sheet',
+        shortLabel: 'CSV',
+        category: 'Spreadsheet',
+        icon: <FileSpreadsheet className="h-6 w-6 text-teal-600 dark:text-teal-400" />,
+        containerClass:
+          'border-teal-200 bg-teal-50/90 text-teal-700 dark:border-teal-900/60 dark:bg-teal-950/40 dark:text-teal-300',
+        badgeClass:
+          'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 border border-teal-200/80 dark:border-teal-800/80',
+        borderClass: 'hover:border-teal-300 dark:hover:border-teal-800',
         accentText: 'text-teal-600 dark:text-teal-400',
       };
+    case 'png':
     case 'jpg':
     case 'jpeg':
+    case 'webp':
+    case 'bmp':
+    case 'gif':
+    case 'tiff':
       return {
-        label: 'JPEG Image',
-        shortLabel: 'JPG',
-        category: 'Photo Image',
-        icon: <ImageIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />,
+        label: `${f.toUpperCase()} Image`,
+        shortLabel: f.toUpperCase(),
+        category: 'Image',
+        icon: <ImageIcon className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />,
         containerClass:
-          'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
+          'border-cyan-200 bg-cyan-50/90 text-cyan-700 dark:border-cyan-900/60 dark:bg-cyan-950/40 dark:text-cyan-300',
         badgeClass:
-          'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60',
-        accentText: 'text-emerald-600 dark:text-emerald-400',
+          'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200 border border-cyan-200/80 dark:border-cyan-800/80',
+        borderClass: 'hover:border-cyan-300 dark:hover:border-cyan-800',
+        accentText: 'text-cyan-600 dark:text-cyan-400',
+      };
+    case 'svg':
+      return {
+        label: 'SVG Vector Image',
+        shortLabel: 'SVG',
+        category: 'Image',
+        icon: <FileCode className="h-6 w-6 text-violet-600 dark:text-violet-400" />,
+        containerClass:
+          'border-violet-200 bg-violet-50/90 text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-300',
+        badgeClass:
+          'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200 border border-violet-200/80 dark:border-violet-800/80',
+        borderClass: 'hover:border-violet-300 dark:hover:border-violet-800',
+        accentText: 'text-violet-600 dark:text-violet-400',
       };
     case 'html':
       return {
         label: 'HTML Document',
         shortLabel: 'HTML',
-        category: 'Web Page',
+        category: 'Code',
         icon: <Code className="h-6 w-6 text-purple-600 dark:text-purple-400" />,
         containerClass:
-          'border-purple-200 bg-purple-50/80 text-purple-700 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300',
+          'border-purple-200 bg-purple-50/90 text-purple-700 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300',
         badgeClass:
-          'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60',
+          'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200/80 dark:border-purple-800/80',
+        borderClass: 'hover:border-purple-300 dark:hover:border-purple-800',
         accentText: 'text-purple-600 dark:text-purple-400',
       };
     case 'md':
       return {
         label: 'Markdown Text',
         shortLabel: 'MD',
-        category: 'Formatted Text',
+        category: 'Text',
         icon: <FileCode className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />,
         containerClass:
-          'border-indigo-200 bg-indigo-50/80 text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300',
+          'border-indigo-200 bg-indigo-50/90 text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300',
         badgeClass:
-          'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60',
+          'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200 border border-indigo-200/80 dark:border-indigo-800/80',
+        borderClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
         accentText: 'text-indigo-600 dark:text-indigo-400',
       };
-    case 'txt':
+    case 'json':
+    case 'xml':
       return {
-        label: 'Plain Text',
-        shortLabel: 'TXT',
-        category: 'Plain Document',
+        label: `${f.toUpperCase()} Structured Data`,
+        shortLabel: f.toUpperCase(),
+        category: 'Data',
+        icon: <Code className="h-6 w-6 text-sky-600 dark:text-sky-400" />,
+        containerClass:
+          'border-sky-200 bg-sky-50/90 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300',
+        badgeClass:
+          'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200 border border-sky-200/80 dark:border-sky-800/80',
+        borderClass: 'hover:border-sky-300 dark:hover:border-sky-800',
+        accentText: 'text-sky-600 dark:text-sky-400',
+      };
+    case 'txt':
+    case 'rtf':
+    case 'odt':
+      return {
+        label: f === 'rtf' ? 'Rich Text (RTF)' : f === 'odt' ? 'OpenDocument Text' : 'Plain Text',
+        shortLabel: f.toUpperCase(),
+        category: 'Text',
         icon: <AlignLeft className="h-6 w-6 text-slate-600 dark:text-slate-300" />,
         containerClass:
           'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300',
         badgeClass:
-          'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 border border-slate-300/60 dark:border-slate-600/60',
+          'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 border border-slate-300/80 dark:border-slate-600/80',
+        borderClass: 'hover:border-slate-400 dark:hover:border-slate-600',
         accentText: 'text-slate-600 dark:text-slate-400',
       };
     default:
       return {
-        label: `${format.toUpperCase()} File`,
+        label: `${format.toUpperCase()} Document`,
         shortLabel: format.toUpperCase(),
-        category: 'File',
+        category: 'Document',
         icon: <File className="h-6 w-6 text-slate-500 dark:text-slate-400" />,
         containerClass:
           'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400',
         badgeClass:
           'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+        borderClass: 'hover:border-slate-300 dark:hover:border-slate-700',
         accentText: 'text-slate-500 dark:text-slate-400',
       };
   }
@@ -162,6 +230,7 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
   onConvertSingle,
   onDownload,
   onPreview,
+  onCompare,
   onSyncToCloud,
   onRemove,
 }) => {
@@ -180,7 +249,7 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
   return (
     <div
       id={`conversion-card-${item.id}`}
-      className="group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+      className={`group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 ${sourceVisual.borderClass}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: Distinct File Icon Badge & Detailed Info */}
@@ -210,8 +279,19 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${sourceVisual.badgeClass}`}
               >
                 {sourceVisual.shortLabel}
-                <span className="font-normal opacity-70 hidden xs:inline">• {sourceVisual.category}</span>
+                <span className="font-normal opacity-75 hidden xs:inline">• {sourceVisual.category}</span>
               </span>
+
+              {/* Cache Hit Badge */}
+              {item.cached && (
+                <span
+                  className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/80"
+                  title="Instant replay from verified cryptographic SHA-256 cache"
+                >
+                  <Zap className="h-3 w-3 text-amber-500" />
+                  Instant Cache
+                </span>
+              )}
             </div>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -287,7 +367,7 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
           {item.status === 'queued' && (
             <button
               onClick={() => onConvertSingle(item.id)}
-              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 active:scale-95 transition"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 active:scale-95 transition"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Convert
@@ -302,14 +382,36 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
           )}
 
           {item.status === 'error' && (
-            <div className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
-              <AlertCircle className="h-4 w-4" />
-              <span className="truncate max-w-[120px]">{item.errorMessage || 'Failed'}</span>
+            <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 max-w-[140px] sm:max-w-[200px]"
+                title={item.errorMessage || 'Conversion failed'}
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.errorMessage || 'Failed'}</span>
+              </div>
+              <button
+                onClick={() => onConvertSingle(item.id)}
+                className="flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 active:scale-95 transition"
+                title="Retry conversion"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Retry</span>
+              </button>
             </div>
           )}
 
           {item.status === 'completed' && (
             <div className="flex items-center gap-1.5">
+              {/* Compare Original & Converted */}
+              <button
+                onClick={() => (onCompare ? onCompare(item) : onPreview(item))}
+                className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/80 p-2 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 shadow-2xs transition"
+                title="Compare Original & Converted Files"
+              >
+                <Columns2 className="h-4 w-4" />
+              </button>
+
               {/* Preview */}
               <button
                 onClick={() => onPreview(item)}
@@ -366,10 +468,10 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
         </div>
       )}
 
-      {/* Completed Success Summary Bar */}
+      {/* Completed Success Summary Bar with Fidelity Engine Reporting */}
       {item.status === 'completed' && item.convertedSize && (
-        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
-          <div className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 min-w-0">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 text-xs text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400 min-w-0">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span className="truncate">
               Ready: {item.convertedName}
@@ -377,6 +479,30 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
             <span className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
               {formatBytes(item.convertedSize)}
             </span>
+
+            {/* Fidelity Score Pill */}
+            {item.fidelity && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                  item.fidelity.overallScore >= 90
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                    : item.fidelity.overallScore >= 75
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                }`}
+                title={`Fidelity Score: ${item.fidelity.overallScore}% (${item.fidelity.rating.toUpperCase()}) • Text: ${item.fidelity.metrics.textPreservation}%, Layout: ${item.fidelity.metrics.layoutPreservation}%`}
+              >
+                <Sparkles className="h-3 w-3" />
+                {item.fidelity.overallScore}% Fidelity
+              </span>
+            )}
+
+            {/* Retry improvement indicator */}
+            {item.fidelity?.retried && item.fidelity?.improvementDelta && (
+              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                (+{item.fidelity.improvementDelta}% Auto-Retry Boost)
+              </span>
+            )}
           </div>
 
           {item.checksum && (
@@ -392,4 +518,3 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
     </div>
   );
 };
-

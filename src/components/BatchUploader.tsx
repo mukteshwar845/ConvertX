@@ -18,6 +18,8 @@ import {
   createSampleImageFile,
   createSampleScannedPdfFile,
   createSampleScannedDocumentImage,
+  createSampleCsvFile,
+  createSampleJsonFile,
 } from '../utils/sampleDocs';
 
 interface BatchUploaderProps {
@@ -106,6 +108,16 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
     onFilesAdded([file]);
   };
 
+  const loadSampleCsv = () => {
+    const file = createSampleCsvFile();
+    onFilesAdded([file]);
+  };
+
+  const loadSampleJson = () => {
+    const file = createSampleJsonFile();
+    onFilesAdded([file]);
+  };
+
   return (
     <div className="space-y-4">
       {/* OCR Text Extraction Toggle Banner */}
@@ -176,7 +188,7 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".docx,.pdf,.pptx,.ppt,.txt,.md,.markdown,.html,.htm,.png,.jpg,.jpeg"
+          accept=".docx,.doc,.pdf,.pptx,.ppt,.odp,.xlsx,.xls,.csv,.ods,.png,.jpg,.jpeg,.webp,.svg,.bmp,.gif,.tiff,.txt,.rtf,.odt,.html,.htm,.md,.json,.xml"
           onChange={handleFileInputChange}
           className="hidden"
         />
@@ -188,18 +200,24 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
         <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
           Drop your files here, or <span className="text-blue-600 dark:text-blue-400 underline">browse</span>
         </h3>
-        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 max-w-md">
-          Supports DOCX, PDF, PPTX, TXT, Markdown, HTML, PNG, and JPG. Multi-file batch processing with original formatting preservation.
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 max-w-lg">
+          Universal conversion across Documents (PDF, Word), Presentations, Spreadsheets (Excel, CSV), Images, and Data with fidelity preservation.
         </p>
 
         {/* Supported Format Badges */}
-        <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-          {['.DOCX', '.PDF', '.PPTX', '.TXT', '.MD', '.HTML', '.PNG', '.JPG'].map((ext) => (
+        <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-xl">
+          {[
+            { label: 'PDF / DOCX', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' },
+            { label: 'XLSX / CSV', color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' },
+            { label: 'PPTX / ODP', color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' },
+            { label: 'PNG / JPG / WEBP', color: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300' },
+            { label: 'HTML / MD / JSON', color: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' },
+          ].map((cat) => (
             <span
-              key={ext}
-              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              key={cat.label}
+              className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${cat.color}`}
             >
-              {ext}
+              {cat.label}
             </span>
           ))}
         </div>
@@ -224,9 +242,17 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
           <button
             type="button"
             onClick={loadSampleDocx}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+            className="rounded-lg border border-blue-200 bg-blue-50/80 px-2.5 py-1 font-medium text-blue-800 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition"
           >
-            + Sample DOCX (Report)
+            + Sample DOCX
+          </button>
+          <button
+            type="button"
+            onClick={loadSampleCsv}
+            className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition flex items-center gap-1"
+            title="Load a financial tabular spreadsheet (CSV) to test XLSX / PDF / Table conversions"
+          >
+            + Financial CSV (Sheet)
           </button>
           <button
             type="button"
@@ -234,6 +260,13 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
             className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
           >
             + Sample Markdown
+          </button>
+          <button
+            type="button"
+            onClick={loadSampleJson}
+            className="rounded-lg border border-sky-200 bg-sky-50/80 px-2.5 py-1 font-semibold text-sky-800 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/60 transition"
+          >
+            + JSON Records
           </button>
           <button
             type="button"

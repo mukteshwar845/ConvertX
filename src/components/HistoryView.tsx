@@ -17,6 +17,8 @@ import {
   ScanText,
 } from 'lucide-react';
 import { HistoryRecord } from '../types';
+import { getFormatVisual } from './ConversionCard';
+import { Zap, Sparkles } from 'lucide-react';
 
 interface HistoryViewProps {
   records: HistoryRecord[];
@@ -149,71 +151,87 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredRecords.map((rec) => (
-            <div
-              key={rec.id}
-              className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
-            >
-              {/* Left File details */}
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                  {getFormatIcon(rec.targetFormat)}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-bold text-slate-900 dark:text-white" title={rec.convertedName}>
-                      {rec.convertedName}
-                    </span>
-                    <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                      {rec.targetFormat}
-                    </span>
+          {filteredRecords.map((rec) => {
+            const visual = getFormatVisual(rec.targetFormat);
+            return (
+              <div
+                key={rec.id}
+                className={`flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between ${visual.borderClass}`}
+              >
+                {/* Left File details */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border ${visual.containerClass}`}
+                  >
+                    {visual.icon}
                   </div>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <span>From: {rec.originalName}</span>
-                    <span>•</span>
-                    <span>{formatBytes(rec.convertedSize)}</span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(rec.timestamp).toLocaleDateString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-
-                    {rec.encrypted && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <ShieldCheck className="h-3 w-3" />
-                        AES-256
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-bold text-slate-900 dark:text-white" title={rec.convertedName}>
+                        {rec.convertedName}
                       </span>
-                    )}
-
-                    {rec.ocrExtracted && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
-                        <ScanText className="h-3 w-3" />
-                        OCR Extracted
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${visual.badgeClass}`}>
+                        {visual.shortLabel}
                       </span>
-                    )}
-
-                    {rec.synced && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-                        <Cloud className="h-3 w-3" />
-                        Synced
-                      </span>
-                    )}
-                  </div>
-
-                  {rec.checksum && (
-                    <div className="mt-1 font-mono text-[10px] text-slate-400 dark:text-slate-500">
-                      SHA-256: {rec.checksum}
+                      {rec.cached && (
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/80">
+                          <Zap className="h-3 w-3 text-amber-500" />
+                          Cached
+                        </span>
+                      )}
+                      {rec.fidelityScore !== undefined && (
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/80">
+                          <Sparkles className="h-3 w-3 text-emerald-500" />
+                          {rec.fidelityScore}% Fidelity
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span>From: {rec.originalName}</span>
+                      <span>•</span>
+                      <span>{formatBytes(rec.convertedSize)}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(rec.timestamp).toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+
+                      {rec.encrypted && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" />
+                          AES-256
+                        </span>
+                      )}
+
+                      {rec.ocrExtracted && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                          <ScanText className="h-3 w-3" />
+                          OCR Extracted
+                        </span>
+                      )}
+
+                      {rec.synced && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                          <Cloud className="h-3 w-3" />
+                          Synced
+                        </span>
+                      )}
+                    </div>
+
+                    {rec.checksum && (
+                      <div className="mt-1 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                        SHA-256: {rec.checksum.slice(0, 16)}...
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
               {/* Action buttons */}
               <div className="flex items-center justify-end gap-2 shrink-0">
@@ -244,7 +262,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
