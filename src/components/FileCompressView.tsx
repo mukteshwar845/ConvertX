@@ -5,7 +5,6 @@ import {
   Download,
   Trash2,
   RefreshCw,
-  Sparkles,
   CheckCircle2,
   Archive,
   ArrowRight,
@@ -352,50 +351,7 @@ export const FileCompressView: React.FC<FileCompressViewProps> = ({
     setItems([]);
   };
 
-  // Sample generators for quick test
-  const createSampleLargeImage = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2560;
-    canvas.height = 1440;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Draw colorful pattern
-      const grad = ctx.createLinearGradient(0, 0, 2560, 1440);
-      grad.addColorStop(0, '#0284c7');
-      grad.addColorStop(0.3, '#6366f1');
-      grad.addColorStop(0.7, '#d946ef');
-      grad.addColorStop(1, '#f43f5e');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 2560, 1440);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 84px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Large Uncompressed Photo (2560 × 1440)', 1280, 680);
-      ctx.font = '42px sans-serif';
-      ctx.fillText('Ready for instant file size reduction', 1280, 780);
-    }
-
-    const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), 'image/png'));
-    const file = new File([blob], 'High_Resolution_Photo.png', { type: 'image/png' });
-    handleAddFiles([file]);
-  };
-
-  const createSampleLargeDocument = () => {
-    // Generate a long text document with repetitive tables and content
-    let text = `# Large System Architecture & Operational Report\n\n`;
-    for (let i = 1; i <= 200; i++) {
-      text += `## Section ${i}: Operational Metrics and Server Statistics\n`;
-      text += `This document contains extensive telemetry metrics for cluster node #${i}.\n`;
-      text += `| Node ID | CPU Utilization | Memory Load | Network I/O | Status |\n`;
-      text += `| :--- | :--- | :--- | :--- | :--- |\n`;
-      text += `| NODE-${i}-A | ${(Math.random() * 80 + 10).toFixed(1)}% | 16.4 GB / 32 GB | 1.2 Gbps | Active |\n`;
-      text += `| NODE-${i}-B | ${(Math.random() * 80 + 10).toFixed(1)}% | 22.8 GB / 32 GB | 2.4 Gbps | Healthy |\n\n`;
-    }
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const file = new File([blob], 'Operational_Metrics_Report.md', { type: 'text/markdown' });
-    handleAddFiles([file]);
-  };
 
   const completedCount = items.filter((i) => i.status === 'completed').length;
   const totalOriginalBytes = items.reduce((acc, i) => acc + i.originalSize, 0);
@@ -481,32 +437,6 @@ export const FileCompressView: React.FC<FileCompressViewProps> = ({
           Shrink PDF, Word (DOCX), Excel, PowerPoint, PNG, JPG, and Markdown files instantly.
         </p>
 
-        {/* Quick Sample Buttons */}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              createSampleLargeImage();
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition active:scale-95"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Try Sample Large Photo (2560px)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              createSampleLargeDocument();
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition active:scale-95"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            <span>Try Large Report Document</span>
-          </button>
-        </div>
       </div>
 
       {/* Global Compression Level Selector */}

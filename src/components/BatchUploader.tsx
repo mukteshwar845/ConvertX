@@ -1,21 +1,12 @@
 import React, { useState, useRef } from 'react';
 import {
   UploadCloud,
-  Sparkles,
   Archive,
   Trash2,
   Play,
   ScanText,
-  FileText,
-  Table,
 } from 'lucide-react';
 import { TargetFormat } from '../types';
-import {
-  createSampleDocxFile,
-  createSampleTxtFile,
-  createSampleScannedPdfFile,
-  createSampleCsvFile,
-} from '../utils/sampleDocs';
 
 interface BatchUploaderProps {
   onFilesAdded: (files: File[]) => void;
@@ -164,55 +155,6 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
         </div>
       </div>
 
-      {/* Quick Test Samples Bar */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3.5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span>Try with ready sample files:</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={async () => onFilesAdded([await createSampleDocxFile()])}
-              className="flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition active:scale-95"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Word Doc (.docx)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onFilesAdded([createSampleCsvFile()])}
-              className="flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition active:scale-95"
-            >
-              <Table className="h-3.5 w-3.5" />
-              <span>Spreadsheet (.csv)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={async () => {
-                onOcrToggle(true);
-                onFilesAdded([await createSampleScannedPdfFile()]);
-              }}
-              className="flex items-center gap-1 rounded-xl border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition active:scale-95"
-            >
-              <ScanText className="h-3.5 w-3.5" />
-              <span>Scanned PDF (OCR)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onFilesAdded([createSampleTxtFile()])}
-              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition active:scale-95"
-            >
-              <span>Markdown (.md)</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Batch Control Toolbar (Active when files are queued) */}
       {queueLength > 0 && (

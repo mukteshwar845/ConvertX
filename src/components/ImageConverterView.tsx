@@ -5,7 +5,6 @@ import {
   Download,
   Trash2,
   RefreshCw,
-  Sparkles,
   CheckCircle2,
   Archive,
   ArrowRight,
@@ -261,69 +260,6 @@ export const ImageConverterView: React.FC<ImageConverterViewProps> = ({
     setImages([]);
   };
 
-  // Sample generators for quick test
-  const createSampleWallpaper = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Modern sunset mesh gradient
-      const grad = ctx.createLinearGradient(0, 0, 1920, 1080);
-      grad.addColorStop(0, '#3b82f6');
-      grad.addColorStop(0.5, '#8b5cf6');
-      grad.addColorStop(1, '#ec4899');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1920, 1080);
-
-      // Geometric shapes
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.beginPath();
-      ctx.arc(960, 540, 320, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 72px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('ConvertX Ultra HD Wallpaper', 960, 520);
-
-      ctx.font = '36px sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillText('1920 × 1080 • Ready for WebP, JPG, or PDF Conversion', 960, 580);
-    }
-
-    const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), 'image/png'));
-    const file = new File([blob], 'Sample_Wallpaper_HD.png', { type: 'image/png' });
-    await handleAddFiles([file]);
-  };
-
-  const createSampleGraphic = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 800;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, 800, 800);
-
-      const grad = ctx.createRadialGradient(400, 400, 50, 400, 400, 350);
-      grad.addColorStop(0, '#10b981');
-      grad.addColorStop(1, '#065f46');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(400, 400, 260, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 50px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('ConvertX Logo Badge', 400, 415);
-    }
-
-    const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), 'image/png'));
-    const file = new File([blob], 'Sample_Logo_Badge.png', { type: 'image/png' });
-    await handleAddFiles([file]);
-  };
 
   const completedCount = images.filter((i) => i.status === 'completed').length;
 
@@ -411,32 +347,6 @@ export const ImageConverterView: React.FC<ImageConverterViewProps> = ({
           Supports PNG, JPEG, WEBP, SVG, BMP, GIF, and TIFF photos or illustrations.
         </p>
 
-        {/* Quick Sample Buttons */}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              createSampleWallpaper();
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50/80 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-100 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition active:scale-95"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Try Sample Wallpaper (1080p)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              createSampleGraphic();
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition active:scale-95"
-          >
-            <ImageIcon className="h-3.5 w-3.5" />
-            <span>Try Sample Logo Graphic</span>
-          </button>
-        </div>
       </div>
 
       {/* Global Image Controls (Target format, Quality slider, Resolution) */}
