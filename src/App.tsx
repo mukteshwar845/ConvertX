@@ -30,6 +30,13 @@ import {
 } from './utils/conversionEngine';
 import { clearConversionCache } from './utils/universalConverter';
 import { triggerBlobDownload } from './utils/downloadHelper';
+import {
+  dbGetAllHistory,
+  dbSaveRecord,
+  dbDeleteRecord,
+  dbClearAllHistory,
+  migrateFromLocalStorage,
+} from './utils/historyDB';
 
 export default function App() {
   // Theme state
@@ -47,14 +54,8 @@ export default function App() {
 
   // File queues & History
   const [queue, setQueue] = useState<ConversionItem[]>([]);
-  const [history, setHistory] = useState<HistoryRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem('docuconvert_history');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState<boolean>(false);
 
   // Modals
   const [previewItem, setPreviewItem] = useState<ConversionItem | HistoryRecord | null>(null);
@@ -100,13 +101,16 @@ export default function App() {
     }
   }, [isDark]);
 
+  // On mount: migrate old localStorage history → IndexedDB, then load all records
   useEffect(() => {
-    try {
-      localStorage.setItem('docuconvert_history', JSON.stringify(history));
-    } catch (e) {
-      console.warn('History storage exceeded limit', e);
-    }
-  }, [history]);
+    migrateFromLocalStorage()
+      .then(() => dbGetAllHistory())
+      .then((records) => {
+        setHistory(records);
+        setHistoryLoaded(true);
+      })
+      .catch(() => setHistoryLoaded(true));
+  }, []);
 
   // PWA beforeinstallprompt handler
   useEffect(() => {
@@ -265,6 +269,8 @@ export default function App() {
         previewSnippet: result.preview.type === 'text' ? result.preview.content.slice(0, 300) : undefined,
       };
       setHistory((prev) => [histRecord, ...prev]);
+      // Persist to IndexedDB (device-local, no backend)
+      dbSaveRecord(histRecord).catch((e) => console.warn('IndexedDB save failed:', e));
     } catch (err: any) {
       console.error('Conversion error:', err);
       setQueue((prev) =>
@@ -349,15 +355,32 @@ export default function App() {
     addToast('info', 'Queue cleared and memory released.', 'Queue Reset');
   };
 
-  const handleDeleteHistoryRecord = (id: string) => {
+  const handleDeleteHistoryRecord = async (id: string) => {
+    // Remove from queue memory (revoke any cached URL)
+    const queueMatch = queue.find((q) => q.id === id);
+    if (queueMatch?.convertedUrl) {
+      URL.revokeObjectURL(queueMatch.convertedUrl);
+    }
+    // Update UI immediately
     setHistory((prev) => prev.filter((h) => h.id !== id));
+    // Delete from IndexedDB — no backend call
+    try {
+      await dbDeleteRecord(id);
+    } catch (e) {
+      console.warn('IndexedDB delete failed:', e);
+    }
   };
 
-  const handleClearHistory = () => {
-    if (window.confirm('Clear all conversion history?')) {
-      setHistory([]);
-      localStorage.removeItem('docuconvert_history');
+  const handleClearHistory = async () => {
+    // UI confirmation is handled inline in HistoryView — this handler just executes
+    setHistory([]);
+    try {
+      await dbClearAllHistory();
+    } catch (e) {
+      console.warn('IndexedDB clear failed:', e);
     }
+    // Also wipe the old localStorage key if it somehow still exists
+    localStorage.removeItem('docuconvert_history');
   };
 
   // Native PWA install
@@ -502,7 +525,10 @@ export default function App() {
         {/* Image Converter View */}
         {activeTab === 'images' && (
           <ImageConverterView
-            onAddToHistory={(rec) => setHistory((prev) => [rec, ...prev])}
+            onAddToHistory={(rec) => {
+              setHistory((prev) => [rec, ...prev]);
+              dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+            }}
             addToast={addToast}
           />
         )}
@@ -510,7 +536,10 @@ export default function App() {
         {/* Compress Files View */}
         {activeTab === 'compress' && (
           <FileCompressView
-            onAddToHistory={(rec) => setHistory((prev) => [rec, ...prev])}
+            onAddToHistory={(rec) => {
+              setHistory((prev) => [rec, ...prev]);
+              dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+            }}
             addToast={addToast}
           />
         )}
@@ -522,6 +551,7 @@ export default function App() {
         {activeTab === 'history' && (
           <HistoryView
             records={history}
+            isLoading={!historyLoaded}
             onDownloadRecord={handleDownloadRecord}
             onPreviewRecord={(rec) => setPreviewItem(rec)}
             onDeleteRecord={handleDeleteHistoryRecord}

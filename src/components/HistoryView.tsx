@@ -10,12 +10,16 @@ import {
   ScanText,
   Zap,
   Sparkles,
+  AlertTriangle,
+  X,
+  Check,
 } from 'lucide-react';
 import { HistoryRecord } from '../types';
 import { getFormatVisual } from './ConversionCard';
 
 interface HistoryViewProps {
   records: HistoryRecord[];
+  isLoading?: boolean;
   onDownloadRecord: (record: HistoryRecord) => void;
   onPreviewRecord: (record: HistoryRecord) => void;
   onDeleteRecord: (id: string) => void;
@@ -25,6 +29,7 @@ interface HistoryViewProps {
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
   records,
+  isLoading = false,
   onDownloadRecord,
   onPreviewRecord,
   onDeleteRecord,
@@ -33,6 +38,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFormat, setSelectedFormat] = useState<string>('all');
+  // Tracks which record id is pending inline delete confirmation
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  // Tracks whether "Clear All" confirmation is visible
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const formatBytes = (bytes: number) => {
     if (!bytes || bytes === 0) return '0 B';
@@ -52,6 +61,45 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
   const totalBytes = records.reduce((acc, r) => acc + (r.convertedSize || 0), 0);
 
+  const handleDeleteClick = (id: string) => {
+    setPendingDeleteId(id);
+  };
+
+  const handleDeleteConfirm = (id: string) => {
+    onDeleteRecord(id);
+    setPendingDeleteId(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setPendingDeleteId(null);
+  };
+
+  const handleClearClick = () => {
+    setShowClearConfirm(true);
+  };
+
+  const handleClearConfirm = () => {
+    onClearHistory();
+    setShowClearConfirm(false);
+  };
+
+  const handleClearCancel = () => {
+    setShowClearConfirm(false);
+  };
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-8 w-64 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-12 rounded-xl bg-slate-100 dark:bg-slate-900" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 rounded-xl bg-slate-100 dark:bg-slate-900" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header & Overview Stats */}
@@ -59,10 +107,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <History className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            Conversion History & Downloads
+            Conversion History
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {records.length} document{records.length === 1 ? '' : 's'} converted • Total {formatBytes(totalBytes)}
+            {records.length} document{records.length === 1 ? '' : 's'} converted · {formatBytes(totalBytes)} total ·{' '}
+            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+              Stored only on this device
+            </span>
           </p>
         </div>
 
@@ -75,13 +127,37 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               <Archive className="h-3.5 w-3.5" />
               Download All (ZIP)
             </button>
-            <button
-              onClick={onClearHistory}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear All
-            </button>
+
+            {/* Clear All — inline confirmation */}
+            {showClearConfirm ? (
+              <div className="flex items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 dark:border-rose-800 dark:bg-rose-950/60 shadow-sm">
+                <AlertTriangle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 whitespace-nowrap">
+                  Delete all {records.length} records?
+                </span>
+                <button
+                  onClick={handleClearConfirm}
+                  className="ml-1 flex items-center gap-0.5 rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-rose-700 transition"
+                >
+                  <Check className="h-3 w-3" />
+                  Yes, clear
+                </button>
+                <button
+                  onClick={handleClearCancel}
+                  className="flex items-center rounded-md p-1 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleClearClick}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear All
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -117,6 +193,16 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
       </div>
 
+      {/* Privacy Notice */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/70 bg-emerald-50/60 px-4 py-3 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+        <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+        <p className="text-xs text-emerald-800 dark:text-emerald-300">
+          <strong>100% Private</strong> — Your conversion history is stored only in your browser's local storage (IndexedDB).
+          It never leaves your device, is never sent to any server, and is automatically removed when you clear your browser data.
+          Each device has its own independent history.
+        </p>
+      </div>
+
       {/* History Records List */}
       {filteredRecords.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
@@ -126,7 +212,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {records.length === 0
-              ? 'Files you convert will automatically be logged here for quick downloads and previews.'
+              ? 'Files you convert are logged here automatically. History is stored locally on this device only.'
               : 'Try adjusting your search terms or format filters.'}
           </p>
         </div>
@@ -134,20 +220,28 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         <div className="space-y-3">
           {filteredRecords.map((rec) => {
             const visual = getFormatVisual(rec.targetFormat);
+            const isPendingDelete = pendingDeleteId === rec.id;
+
             return (
               <div
                 key={rec.id}
-                className={`flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between ${visual.borderClass}`}
+                className={`flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between ${
+                  isPendingDelete
+                    ? 'border-rose-300 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-950/20'
+                    : 'border-slate-200 dark:border-slate-800'
+                }`}
               >
                 {/* Left File details */}
                 <div className="flex items-start gap-3 min-w-0">
                   <div
-                    className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border ${visual.containerClass}`}
+                    className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border ${visual.containerClass} ${
+                      isPendingDelete ? 'opacity-50' : ''
+                    }`}
                   >
                     {visual.icon}
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  <div className={`min-w-0 flex-1 ${isPendingDelete ? 'opacity-60' : ''}`}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-bold text-slate-900 dark:text-white" title={rec.convertedName}>
                         {rec.convertedName}
@@ -183,7 +277,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                           minute: '2-digit',
                         })}
                       </span>
-
                       {rec.ocrExtracted && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
                           <ScanText className="h-3 w-3" />
@@ -194,35 +287,60 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                   </div>
                 </div>
 
-              {/* Action buttons */}
-              <div className="flex items-center justify-end gap-2 shrink-0">
-                <button
-                  onClick={() => onPreviewRecord(rec)}
-                  className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
-                  title="Preview"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Preview</span>
-                </button>
+                {/* Action buttons */}
+                <div className="flex items-center justify-end gap-2 shrink-0">
+                  {isPendingDelete ? (
+                    /* Inline Delete Confirmation */
+                    <div className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 dark:border-rose-800 dark:bg-rose-950/50">
+                      <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+                      <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                        Remove this record?
+                      </span>
+                      <button
+                        onClick={() => handleDeleteConfirm(rec.id)}
+                        className="flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-rose-700 active:scale-95 transition"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Delete
+                      </button>
+                      <button
+                        onClick={handleDeleteCancel}
+                        className="flex items-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 transition"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => onPreviewRecord(rec)}
+                        className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
+                        title="Preview"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Preview</span>
+                      </button>
 
-                <button
-                  onClick={() => onDownloadRecord(rec)}
-                  className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
-                  title="Download File"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download</span>
-                </button>
+                      <button
+                        onClick={() => onDownloadRecord(rec)}
+                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+                        title="Download File"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
+                      </button>
 
-                <button
-                  onClick={() => onDeleteRecord(rec.id)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
-                  title="Delete from history"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                      <button
+                        onClick={() => handleDeleteClick(rec.id)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+                        title="Delete from history"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
             );
           })}
         </div>
