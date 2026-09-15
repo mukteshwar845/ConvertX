@@ -11,7 +11,7 @@ export async function createSampleDocxFile(): Promise<File> {
     },
     {
       type: 'paragraph' as const,
-      text: 'DocuConvert provides enterprise-grade document conversion maintaining full formatting integrity across DOCX, PDF, and PowerPoint formats with end-to-end client encryption.',
+      text: 'ConvertX provides enterprise-grade document conversion maintaining full formatting integrity across DOCX, PDF, and PowerPoint formats with end-to-end client encryption.',
       bold: false,
     },
     {
@@ -56,7 +56,7 @@ export function createSampleTxtFile(): File {
   const content = `# Project Architecture Overview
 
 ## 1. System Goals
-DocuConvert enables zero-latency document transformations across multiple platforms.
+ConvertX enables zero-latency document transformations across multiple platforms.
 
 ## 2. Core Capabilities
 - High-accuracy document formatting preservation
@@ -95,7 +95,7 @@ export function createSampleImageFile(): Promise<File> {
       // Title text
       ctx.fillStyle = '#1e3a8a';
       ctx.font = 'bold 36px Arial';
-      ctx.fillText('DocuConvert Visual Asset', 120, 180);
+      ctx.fillText('ConvertX Visual Asset', 120, 180);
 
       // Subtitle
       ctx.fillStyle = '#64748b';

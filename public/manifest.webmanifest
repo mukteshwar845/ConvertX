@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "DocuConvert - Batch Document Converter",
-  "short_name": "DocuConvert",
-  "description": "Batch document converter with formatting integrity, AES-256 encryption, and cloud sync.",
+  "name": "ConvertX - Universal Document & File Converter",
+  "short_name": "ConvertX",
+  "description": "Fast, high-fidelity universal file converter, compressor, and archiver running 100% privately in your browser.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

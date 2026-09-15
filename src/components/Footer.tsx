@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ArrowRightLeft,
   ShieldCheck,
   ChevronUp,
   FileText,
@@ -38,9 +37,11 @@ export const Footer: React.FC<FooterProps> = ({
               }}
               className="inline-flex cursor-pointer items-center gap-2.5 transition-transform hover:scale-[1.01]"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/20">
-                <ArrowRightLeft className="h-4.5 w-4.5" />
-              </div>
+              <img
+                src="/icon.svg"
+                alt="ConvertX Logo"
+                className="h-8 w-8 rounded-xl shadow-md shadow-blue-500/20 object-contain transition-transform hover:scale-105"
+              />
               <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
                 Convert<span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">X</span>
               </span>

@@ -4,7 +4,6 @@ import {
   Moon,
   Sun,
   Smartphone,
-  ArrowRightLeft,
   Minimize2,
   Archive,
   FileText,
@@ -39,11 +38,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div
           id="brand-logo"
           onClick={() => setActiveTab('documents')}
-          className="flex cursor-pointer items-center gap-2.5 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="group flex cursor-pointer items-center gap-2.5 transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/25">
-            <ArrowRightLeft className="h-5 w-5" />
-          </div>
+          <img
+            src="/icon.svg"
+            alt="ConvertX Logo"
+            className="h-9 w-9 rounded-xl shadow-md shadow-blue-500/20 object-contain transition-transform group-hover:scale-105"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">

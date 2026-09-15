@@ -1,5 +1,4 @@
-import React from 'react';
-import { Smartphone, Share, PlusSquare, X, CheckCircle2 } from 'lucide-react';
+import { Share, PlusSquare, X, CheckCircle2 } from 'lucide-react';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -28,15 +27,17 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
-          <Smartphone className="h-6 w-6" />
-        </div>
+        <img
+          src="/icon.svg"
+          alt="ConvertX App"
+          className="h-12 w-12 rounded-2xl shadow-md shadow-blue-500/25 object-contain"
+        />
 
         <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
-          Install DocuConvert App
+          Install ConvertX App
         </h3>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Install on iOS or Android for standalone, lightning-fast offline document conversions.
+          Install on iOS or Android for standalone, lightning-fast offline file conversions and compression.
         </p>
 
         {isIOS ? (
@@ -71,7 +72,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         ) : canNativeInstall ? (
           <div className="mt-4 space-y-3">
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              Click below to install DocuConvert to your device launcher.
+              Click below to install ConvertX to your device launcher.
             </p>
             <button
               onClick={() => {

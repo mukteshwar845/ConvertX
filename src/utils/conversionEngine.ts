@@ -302,7 +302,7 @@ export async function renderContentToPptx(
     fontFace: 'Arial',
   });
 
-  titleSlide.addText('Converted with DocuConvert • Preserved Formatting Integrity', {
+  titleSlide.addText('Converted with ConvertX • Preserved Formatting Integrity', {
     x: 1.0,
     y: 3.8,
     w: '80%',
@@ -377,7 +377,7 @@ export async function renderContentToPptx(
     }
 
     // Slide footer
-    slide.addText('DocuConvert Presentation System', {
+    slide.addText('ConvertX Presentation System', {
       x: 0.8,
       y: 6.8,
       w: '50%',
