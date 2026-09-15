@@ -47,14 +47,18 @@ export function detectFormat(file: File): SupportedFormat {
   if (name.endsWith('.md') || name.endsWith('.markdown')) return 'md';
   if (name.endsWith('.html') || name.endsWith('.htm')) return 'html';
   if (name.endsWith('.png')) return 'png';
-  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'jpg';
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.jfif')) return 'jpg';
   if (name.endsWith('.webp')) return 'webp';
   if (name.endsWith('.svg')) return 'svg';
   if (name.endsWith('.bmp')) return 'bmp';
   if (name.endsWith('.gif')) return 'gif';
   if (name.endsWith('.tiff') || name.endsWith('.tif')) return 'tiff';
+  if (name.endsWith('.avif')) return 'webp';
+  if (name.endsWith('.ico')) return 'png';
+  if (name.endsWith('.tsv')) return 'csv';
   if (name.endsWith('.json')) return 'json';
   if (name.endsWith('.xml')) return 'xml';
+  if (name.endsWith('.yaml') || name.endsWith('.yml') || name.endsWith('.log') || name.endsWith('.ini')) return 'txt';
 
   // MIME fallback
   if (file.type.includes('word')) return 'docx';

@@ -473,9 +473,16 @@ export async function detectFileFormat(file: File): Promise<{
       return { format: 'png', signature: 'PNG Raster Image', mimeType: 'image/png' };
     case 'jpg':
     case 'jpeg':
+    case 'jfif':
       return { format: 'jpg', signature: 'JPEG Raster Image', mimeType: 'image/jpeg' };
     case 'webp':
       return { format: 'webp', signature: 'WebP Modern Image', mimeType: 'image/webp' };
+    case 'avif':
+      return { format: 'webp', signature: 'AVIF Image Container', mimeType: 'image/avif' };
+    case 'ico':
+      return { format: 'png', signature: 'Windows Icon Format', mimeType: 'image/x-icon' };
+    case 'tsv':
+      return { format: 'csv', signature: 'Tab-Separated Values', mimeType: 'text/tab-separated-values' };
     case 'svg':
       return { format: 'svg', signature: 'SVG Vector Graphic', mimeType: 'image/svg+xml' };
     case 'bmp':

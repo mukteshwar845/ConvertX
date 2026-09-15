@@ -111,7 +111,7 @@ export async function universalConvertDocument(
 
     // Category B: IMAGES (PNG, JPG, WEBP, SVG, BMP, GIF, TIFF)
     if (['png', 'jpg', 'webp', 'svg', 'bmp', 'gif', 'tiff'].includes(sourceFormat)) {
-      if (['png', 'jpg', 'webp', 'svg', 'bmp', 'pdf'].includes(targetFormat) && !ocrEnabled) {
+      if (['png', 'jpg', 'webp', 'svg', 'bmp', 'pdf'].includes(targetFormat)) {
         onProgress?.(55, 'Applying image color profile and raster scaling...');
         const res = await convertImage(file, targetFormat as any, options, (p, msg) =>
           onProgress?.(30 + p * 0.5, msg)
