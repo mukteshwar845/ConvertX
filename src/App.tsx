@@ -87,6 +87,10 @@ export default function App() {
 
   const [autoEncrypt, setAutoEncrypt] = useState<boolean>(true);
   const [globalTarget, setGlobalTarget] = useState<TargetFormat>('pdf');
+  const [ocrEnabled, setOcrEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('docuconvert_ocr');
+    return saved !== null ? saved === 'true' : true;
+  });
 
   // File queues & History
   const [queue, setQueue] = useState<ConversionItem[]>([]);
@@ -139,6 +143,10 @@ export default function App() {
   }, [autoSync]);
 
   useEffect(() => {
+    localStorage.setItem('docuconvert_ocr', String(ocrEnabled));
+  }, [ocrEnabled]);
+
+  useEffect(() => {
     try {
       localStorage.setItem('docuconvert_history', JSON.stringify(history));
     } catch (e) {
@@ -189,7 +197,7 @@ export default function App() {
   const handleFilesAdded = (files: File[]) => {
     const newItems: ConversionItem[] = files.map((file) => {
       const source = detectFormat(file);
-      const targets = getAvailableTargets(source);
+      const targets = getAvailableTargets(source, ocrEnabled);
       const target = targets.includes(globalTarget) ? globalTarget : targets[0] || 'pdf';
 
       return {
@@ -202,11 +210,27 @@ export default function App() {
         status: 'queued',
         progress: 0,
         timestamp: Date.now(),
+        ocrEnabled,
       };
     });
 
     setQueue((prev) => [...prev, ...newItems]);
     setActiveTab('converter');
+  };
+
+  // Toggle OCR across current queue and future uploads
+  const handleOcrToggle = (enabled: boolean) => {
+    setOcrEnabled(enabled);
+    setQueue((prev) =>
+      prev.map((item) => {
+        if (item.status === 'queued') {
+          const targets = getAvailableTargets(item.sourceFormat, enabled);
+          const target = targets.includes(item.targetFormat) ? item.targetFormat : targets[0] || 'pdf';
+          return { ...item, ocrEnabled: enabled, targetFormat: target };
+        }
+        return item;
+      })
+    );
   };
 
   // Change target for a specific file
@@ -227,13 +251,17 @@ export default function App() {
 
     const startTime = Date.now();
     try {
+      const itemOcr = targetItem.ocrEnabled ?? ocrEnabled;
       const result = await convertDocument(
         targetItem.file,
         targetItem.targetFormat,
-        (prog, text) => {
-          setQueue((prev) =>
-            prev.map((i) => (i.id === id ? { ...i, progress: prog } : i))
-          );
+        {
+          ocrEnabled: itemOcr,
+          onProgress: (prog, text) => {
+            setQueue((prev) =>
+              prev.map((i) => (i.id === id ? { ...i, progress: prog } : i))
+            );
+          },
         }
       );
 
@@ -273,6 +301,7 @@ export default function App() {
                 iv,
                 salt,
                 checksum,
+                ocrExtracted: result.ocrUsed,
                 extractedPreview: result.preview,
               }
             : i
@@ -292,6 +321,7 @@ export default function App() {
         checksum,
         encrypted: autoEncrypt,
         synced: false,
+        ocrExtracted: result.ocrUsed,
         previewSnippet: result.preview.type === 'text' ? result.preview.content.slice(0, 300) : undefined,
       };
       setHistory((prev) => [histRecord, ...prev]);
@@ -563,13 +593,15 @@ export default function App() {
                 // Also update existing queued files if they support it
                 setQueue((prev) =>
                   prev.map((i) => {
-                    const targets = getAvailableTargets(i.sourceFormat);
+                    const targets = getAvailableTargets(i.sourceFormat, ocrEnabled);
                     return targets.includes(tgt) ? { ...i, targetFormat: tgt } : i;
                   })
                 );
               }}
               autoEncrypt={autoEncrypt}
               onAutoEncryptChange={setAutoEncrypt}
+              ocrEnabled={ocrEnabled}
+              onOcrToggle={handleOcrToggle}
             />
 
             {/* Queue Cards */}

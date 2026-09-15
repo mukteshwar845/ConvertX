@@ -13,6 +13,7 @@ export interface ConversionResult {
   blob: Blob;
   name: string;
   size: number;
+  ocrUsed?: boolean;
   preview: {
     type: 'html' | 'text' | 'pdf' | 'image';
     content: string; // HTML string, raw text, or blob URL
@@ -47,14 +48,14 @@ export function detectFormat(file: File): SupportedFormat {
 /**
  * Get available target formats for a given source format
  */
-export function getAvailableTargets(source: SupportedFormat): TargetFormat[] {
+export function getAvailableTargets(source: SupportedFormat, ocrEnabled: boolean = false): TargetFormat[] {
   switch (source) {
     case 'docx':
       return ['pdf', 'pptx', 'txt', 'html', 'md'];
     case 'pdf':
-      return ['docx', 'txt', 'html', 'pptx'];
+      return ['docx', 'txt', 'html', 'pptx', 'md'];
     case 'pptx':
-      return ['pdf', 'txt', 'html', 'docx'];
+      return ['pdf', 'txt', 'html', 'docx', 'md'];
     case 'txt':
     case 'md':
       return ['pdf', 'docx', 'pptx', 'html'];
@@ -62,7 +63,7 @@ export function getAvailableTargets(source: SupportedFormat): TargetFormat[] {
       return ['pdf', 'docx', 'txt', 'md'];
     case 'png':
     case 'jpg':
-      return ['pdf'];
+      return ocrEnabled ? ['docx', 'txt', 'pdf', 'html', 'pptx', 'md'] : ['pdf', 'docx', 'txt'];
     default:
       return ['pdf', 'txt'];
   }
@@ -441,14 +442,205 @@ async function parsePdfText(buffer: ArrayBuffer): Promise<{ text: string; paragr
   };
 }
 
+export interface ConversionOptions {
+  ocrEnabled?: boolean;
+  onProgress?: ConversionProgressCallback;
+}
+
+/**
+ * Parse markdown into structured DOCX sections
+ */
+export function markdownToSections(md: string) {
+  const lines = md.split('\n');
+  const sections: Array<{
+    type: 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet';
+    text: string;
+    bold?: boolean;
+  }> = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    if (line.startsWith('# ')) {
+      sections.push({ type: 'heading1', text: line.replace(/^#\s+/, '') });
+    } else if (line.startsWith('## ')) {
+      sections.push({ type: 'heading2', text: line.replace(/^##\s+/, '') });
+    } else if (line.startsWith('### ')) {
+      sections.push({ type: 'heading3', text: line.replace(/^###\s+/, '') });
+    } else if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s+/.test(line)) {
+      sections.push({ type: 'bullet', text: line.replace(/^([-*]|\d+\.)\s+/, '') });
+    } else if (line.startsWith('|') && line.endsWith('|')) {
+      if (!line.includes('---')) {
+        const cells = line
+          .split('|')
+          .map((c) => c.trim())
+          .filter(Boolean);
+        sections.push({ type: 'paragraph', text: cells.join('   |   '), bold: true });
+      }
+    } else {
+      sections.push({ type: 'paragraph', text: line });
+    }
+  }
+
+  if (sections.length === 0) {
+    sections.push({ type: 'paragraph', text: md });
+  }
+
+  return sections;
+}
+
+/**
+ * Convert markdown to clean semantic HTML
+ */
+export function markdownToHtml(md: string): string {
+  let html = md
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    .replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>')
+    .replace(/^\d+\.\s+(.*$)/gim, '<li>$1</li>');
+
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/gm, '<ul>$1</ul>');
+
+  return html
+    .split(/\n\s*\n/)
+    .map((block) => {
+      block = block.trim();
+      if (!block) return '';
+      if (
+        block.startsWith('<h') ||
+        block.startsWith('<ul') ||
+        block.startsWith('<ol') ||
+        block.startsWith('<table')
+      ) {
+        return block;
+      }
+      return `<p>${block.replace(/\n/g, '<br/>')}</p>`;
+    })
+    .join('\n');
+}
+
+/**
+ * Parse markdown into presentation slides
+ */
+export function markdownToSlides(title: string, md: string): Array<{ title: string; bullets: string[] }> {
+  const sections: Array<{ title: string; bullets: string[] }> = [];
+  const lines = md.split('\n');
+  let currentTitle = title.replace(/\.[^/.]+$/, '');
+  let currentBullets: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith('# ') || trimmed.startsWith('## ')) {
+      if (currentBullets.length > 0 || currentTitle !== title) {
+        sections.push({
+          title: currentTitle,
+          bullets: currentBullets.length > 0 ? currentBullets : ['Document section content'],
+        });
+      }
+      currentTitle = trimmed.replace(/^#+\s*/, '');
+      currentBullets = [];
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || /^\d+\.\s+/.test(trimmed)) {
+      currentBullets.push(trimmed.replace(/^([-*]|\d+\.)\s*/, ''));
+    } else if (currentBullets.length < 5 && trimmed.length < 200) {
+      currentBullets.push(trimmed);
+    }
+  }
+
+  if (currentTitle || currentBullets.length > 0) {
+    sections.push({
+      title: currentTitle,
+      bullets: currentBullets.length > 0 ? currentBullets : ['Extracted document content'],
+    });
+  }
+
+  return sections.length > 0 ? sections : [{ title: 'Overview', bullets: [md.slice(0, 200)] }];
+}
+
+/**
+ * Server-side OCR Text Extractor with graceful client fallbacks
+ */
+export async function performOcrExtraction(
+  file: File,
+  onProgress?: ConversionProgressCallback
+): Promise<{ text: string; success: boolean }> {
+  onProgress?.(25, 'Preparing document for Optical Character Recognition (OCR)...');
+
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result as string;
+      const commaIdx = res.indexOf(',');
+      resolve(commaIdx >= 0 ? res.substring(commaIdx + 1) : res);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const mimeType =
+    file.type ||
+    (file.name.toLowerCase().endsWith('.pdf')
+      ? 'application/pdf'
+      : file.name.toLowerCase().endsWith('.png')
+      ? 'image/png'
+      : 'image/jpeg');
+
+  onProgress?.(50, 'Analyzing scanned page with OCR Vision Engine...');
+
+  try {
+    const response = await fetch('/api/ocr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        base64,
+        mimeType,
+        fileName: file.name,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.text && data.text.trim().length > 0) {
+        onProgress?.(75, 'Extracted text and structure via OCR');
+        return { text: data.text.trim(), success: true };
+      }
+    } else {
+      const errData = await response.json().catch(() => ({}));
+      console.warn('OCR endpoint returned status:', response.status, errData);
+    }
+  } catch (err) {
+    console.warn('Network error invoking OCR API:', err);
+  }
+
+  return { text: '', success: false };
+}
+
 /**
  * Main Direct Document Converter Engine
  */
 export async function convertDocument(
   file: File,
   targetFormat: TargetFormat,
-  onProgress?: ConversionProgressCallback
+  onProgressOrOptions?: ConversionProgressCallback | ConversionOptions,
+  maybeOptions?: { ocrEnabled?: boolean }
 ): Promise<ConversionResult> {
+  let onProgress: ConversionProgressCallback | undefined;
+  let ocrEnabled = false;
+
+  if (typeof onProgressOrOptions === 'function') {
+    onProgress = onProgressOrOptions;
+    if (maybeOptions?.ocrEnabled) {
+      ocrEnabled = maybeOptions.ocrEnabled;
+    }
+  } else if (onProgressOrOptions && typeof onProgressOrOptions === 'object') {
+    onProgress = onProgressOrOptions.onProgress;
+    ocrEnabled = !!onProgressOrOptions.ocrEnabled;
+  }
   const sourceFormat = detectFormat(file);
   const baseName = file.name.replace(/\.[^/.]+$/, '');
   const outName = `${baseName}.${targetFormat}`;
@@ -581,40 +773,78 @@ export async function convertDocument(
 
   // PDF Source
   if (sourceFormat === 'pdf') {
-    onProgress?.(35, 'Analyzing PDF streams and text...');
-    const { text, paragraphs } = await parsePdfText(arrayBuffer);
+    let text = '';
+    let paragraphs: string[] = [];
+    let ocrUsed = false;
+
+    if (ocrEnabled) {
+      onProgress?.(30, 'Performing OCR on scanned PDF document...');
+      const ocrRes = await performOcrExtraction(file, onProgress);
+      if (ocrRes.success && ocrRes.text) {
+        text = ocrRes.text;
+        paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+        ocrUsed = true;
+      }
+    }
+
+    if (!text) {
+      onProgress?.(35, 'Analyzing PDF streams and text...');
+      const parsed = await parsePdfText(arrayBuffer);
+      text = parsed.text;
+      paragraphs = parsed.paragraphs;
+
+      // Auto-detect image-only / scanned PDF if extracted text is negligible
+      if ((!text || text.length < 30) && !ocrUsed) {
+        onProgress?.(45, 'Scanned / image-based PDF detected. Running OCR extraction...');
+        const ocrRes = await performOcrExtraction(file, onProgress);
+        if (ocrRes.success && ocrRes.text) {
+          text = ocrRes.text;
+          paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+          ocrUsed = true;
+        }
+      }
+    }
 
     if (targetFormat === 'docx') {
       onProgress?.(70, 'Building OpenXML Word document (.docx)...');
-      const sections = paragraphs.map((p, idx) => ({
-        type: idx === 0 ? ('heading1' as const) : ('paragraph' as const),
-        text: p,
-      }));
+      const sections = ocrUsed
+        ? markdownToSections(text)
+        : paragraphs.map((p, idx) => ({
+            type: idx === 0 ? ('heading1' as const) : ('paragraph' as const),
+            text: p,
+          }));
       const blob = await createDocxFromContent(baseName, sections);
       onProgress?.(100, 'Conversion complete');
       return {
         blob,
         name: outName,
         size: blob.size,
+        ocrUsed,
         preview: { type: 'text', content: text },
       };
     }
 
     if (targetFormat === 'pptx') {
       onProgress?.(65, 'Creating presentation slides...');
-      const slideSections = [];
-      for (let i = 0; i < paragraphs.length; i += 3) {
-        const chunk = paragraphs.slice(i, i + 3);
-        slideSections.push({
-          title: chunk[0] ? chunk[0].slice(0, 50) : `Slide ${i / 3 + 1}`,
-          bullets: chunk.slice(1),
-        });
-      }
+      const slideSections = ocrUsed
+        ? markdownToSlides(file.name, text)
+        : (() => {
+            const ss = [];
+            for (let i = 0; i < paragraphs.length; i += 3) {
+              const chunk = paragraphs.slice(i, i + 3);
+              ss.push({
+                title: chunk[0] ? chunk[0].slice(0, 50) : `Slide ${i / 3 + 1}`,
+                bullets: chunk.slice(1),
+              });
+            }
+            return ss;
+          })();
       const blob = await renderContentToPptx(file.name, slideSections);
       return {
         blob,
         name: outName,
         size: blob.size,
+        ocrUsed,
         preview: { type: 'text', content: text },
       };
     }
@@ -625,18 +855,31 @@ export async function convertDocument(
         blob,
         name: outName,
         size: blob.size,
+        ocrUsed,
         preview: { type: 'text', content: text },
       };
     }
 
     if (targetFormat === 'html') {
-      const htmlBody = paragraphs.map((p) => `<p>${p}</p>`).join('\n');
+      const htmlBody = ocrUsed ? markdownToHtml(text) : paragraphs.map((p) => `<p>${p}</p>`).join('\n');
       const blob = new Blob([`<html><body>${htmlBody}</body></html>`], { type: 'text/html;charset=utf-8' });
       return {
         blob,
         name: outName,
         size: blob.size,
+        ocrUsed,
         preview: { type: 'html', content: htmlBody },
+      };
+    }
+
+    if (targetFormat === 'md') {
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      return {
+        blob,
+        name: outName,
+        size: blob.size,
+        ocrUsed,
+        preview: { type: 'text', content: text },
       };
     }
   }
@@ -700,8 +943,89 @@ export async function convertDocument(
     }
   }
 
-  // Image Source (PNG, JPG) -> PDF
+  // Image Source (PNG, JPG)
   if (sourceFormat === 'png' || sourceFormat === 'jpg') {
+    // If OCR is enabled or target is a text/doc format (docx, txt, html, pptx, md)
+    if (ocrEnabled || targetFormat !== 'pdf') {
+      onProgress?.(30, 'Performing OCR on scanned image document...');
+      const ocrRes = await performOcrExtraction(file, onProgress);
+      if (ocrRes.success && ocrRes.text) {
+        const text = ocrRes.text;
+
+        if (targetFormat === 'docx') {
+          onProgress?.(70, 'Generating editable Word document with extracted OCR text...');
+          const sections = markdownToSections(text);
+          const blob = await createDocxFromContent(baseName, sections);
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'text', content: text },
+          };
+        }
+
+        if (targetFormat === 'txt') {
+          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'text', content: text },
+          };
+        }
+
+        if (targetFormat === 'html') {
+          const html = markdownToHtml(text);
+          const fullHtml = `<!DOCTYPE html><html><body>${html}</body></html>`;
+          const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'html', content: html },
+          };
+        }
+
+        if (targetFormat === 'pptx') {
+          const slides = markdownToSlides(file.name, text);
+          const blob = await renderContentToPptx(file.name, slides);
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'text', content: text },
+          };
+        }
+
+        if (targetFormat === 'md') {
+          const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'text', content: text },
+          };
+        }
+
+        if (targetFormat === 'pdf') {
+          const html = markdownToHtml(text);
+          const { blob } = renderHtmlToPdf(html, file.name);
+          return {
+            blob,
+            name: outName,
+            size: blob.size,
+            ocrUsed: true,
+            preview: { type: 'html', content: html },
+          };
+        }
+      }
+    }
+
     onProgress?.(45, 'Processing image...');
     const dataUrl = await new Promise<string>((resolve) => {
       const reader = new FileReader();

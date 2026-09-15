@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Trash2,
   RefreshCw,
+  ScanText,
 } from 'lucide-react';
 import { ConversionItem, TargetFormat } from '../types';
 import { getAvailableTargets } from '../utils/conversionEngine';
@@ -172,7 +173,7 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const availableTargets = getAvailableTargets(item.sourceFormat);
+  const availableTargets = getAvailableTargets(item.sourceFormat, item.ocrEnabled);
   const sourceVisual = getFormatVisual(item.sourceFormat);
   const targetVisual = getFormatVisual(item.targetFormat);
 
@@ -258,6 +259,16 @@ export const ConversionCard: React.FC<ConversionCardProps> = ({
                 <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-900/60">
                   <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                   AES-256
+                </span>
+              )}
+
+              {(item.ocrExtracted || item.ocrEnabled) && (
+                <span
+                  className="inline-flex items-center gap-1 rounded bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/60"
+                  title={item.ocrExtracted ? 'Text extracted using Optical Character Recognition' : 'OCR enabled for scanned content'}
+                >
+                  <ScanText className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                  {item.ocrExtracted ? 'OCR Extracted' : 'OCR'}
                 </span>
               )}
 

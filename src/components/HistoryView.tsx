@@ -14,6 +14,7 @@ import {
   FileCode,
   CheckCircle2,
   Calendar,
+  ScanText,
 } from 'lucide-react';
 import { HistoryRecord } from '../types';
 
@@ -188,6 +189,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                         <ShieldCheck className="h-3 w-3" />
                         AES-256
+                      </span>
+                    )}
+
+                    {rec.ocrExtracted && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                        <ScanText className="h-3 w-3" />
+                        OCR Extracted
                       </span>
                     )}
 

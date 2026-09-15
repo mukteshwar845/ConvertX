@@ -9,9 +9,16 @@ import {
   Lock,
   CheckCircle,
   Play,
+  ScanText,
 } from 'lucide-react';
 import { TargetFormat } from '../types';
-import { createSampleDocxFile, createSampleTxtFile, createSampleImageFile } from '../utils/sampleDocs';
+import {
+  createSampleDocxFile,
+  createSampleTxtFile,
+  createSampleImageFile,
+  createSampleScannedPdfFile,
+  createSampleScannedDocumentImage,
+} from '../utils/sampleDocs';
 
 interface BatchUploaderProps {
   onFilesAdded: (files: File[]) => void;
@@ -25,6 +32,8 @@ interface BatchUploaderProps {
   onGlobalTargetChange: (target: TargetFormat) => void;
   autoEncrypt: boolean;
   onAutoEncryptChange: (enabled: boolean) => void;
+  ocrEnabled: boolean;
+  onOcrToggle: (enabled: boolean) => void;
 }
 
 export const BatchUploader: React.FC<BatchUploaderProps> = ({
@@ -39,6 +48,8 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
   onGlobalTargetChange,
   autoEncrypt,
   onAutoEncryptChange,
+  ocrEnabled,
+  onOcrToggle,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,8 +94,71 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
     onFilesAdded([file]);
   };
 
+  const loadSampleScannedPdf = async () => {
+    onOcrToggle(true);
+    const file = await createSampleScannedPdfFile();
+    onFilesAdded([file]);
+  };
+
+  const loadSampleScannedImage = async () => {
+    onOcrToggle(true);
+    const file = await createSampleScannedDocumentImage();
+    onFilesAdded([file]);
+  };
+
   return (
     <div className="space-y-4">
+      {/* OCR Text Extraction Toggle Banner */}
+      <div
+        id="ocr-banner"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-purple-200/80 bg-purple-50/60 p-3.5 text-xs dark:border-purple-900/50 dark:bg-purple-950/25 transition-all shadow-2xs"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+              ocrEnabled
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+            }`}
+          >
+            <ScanText className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 dark:text-white">
+                Optical Character Recognition (OCR)
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                  ocrEnabled
+                    ? 'bg-purple-200/80 text-purple-900 dark:bg-purple-900/80 dark:text-purple-200'
+                    : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+              >
+                {ocrEnabled ? 'Active' : 'Off'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              Extract readable text and document hierarchy from image-based PDFs, paper scans, and photo documents.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          id="ocr-toggle-pill"
+          onClick={() => onOcrToggle(!ocrEnabled)}
+          className={`flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition shrink-0 ${
+            ocrEnabled
+              ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700'
+              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <ScanText className="h-3.5 w-3.5" />
+          <span>{ocrEnabled ? 'OCR Enabled' : 'Enable OCR'}</span>
+        </button>
+      </div>
+
       {/* Drag & Drop Upload Zone */}
       <div
         id="drop-zone"
@@ -140,6 +214,15 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
+            onClick={loadSampleScannedPdf}
+            className="rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 font-semibold text-purple-800 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition flex items-center gap-1"
+            title="Load an image-based scanned PDF with zero embedded text to test OCR"
+          >
+            <ScanText className="h-3 w-3" />
+            + Scanned PDF (OCR)
+          </button>
+          <button
+            type="button"
             onClick={loadSampleDocx}
             className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
           >
@@ -154,10 +237,18 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
           </button>
           <button
             type="button"
+            onClick={loadSampleScannedImage}
+            className="rounded-lg border border-teal-200 bg-teal-50/80 px-2.5 py-1 font-semibold text-teal-800 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-900/60 transition flex items-center gap-1"
+          >
+            <ScanText className="h-3 w-3" />
+            + Scanned Doc Image
+          </button>
+          <button
+            type="button"
             onClick={loadSampleImg}
             className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
           >
-            + Sample Slide Image
+            + Slide Image
           </button>
         </div>
       </div>
@@ -191,6 +282,27 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
                 <option value="md">Markdown (.md)</option>
               </select>
             </div>
+
+            {/* OCR Toggle in Toolbar */}
+            <label
+              id="batch-ocr-toggle-label"
+              className={`flex items-center gap-1.5 cursor-pointer text-xs font-semibold px-2 py-1 rounded-md border shadow-2xs transition ${
+                ocrEnabled
+                  ? 'border-purple-300 bg-purple-100/90 text-purple-900 dark:border-purple-800 dark:bg-purple-950/80 dark:text-purple-200'
+                  : 'border-slate-200 bg-white/80 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+              }`}
+              title="Extract text from image-based PDFs and scanned documents"
+            >
+              <input
+                id="batch-ocr-checkbox"
+                type="checkbox"
+                checked={ocrEnabled}
+                onChange={(e) => onOcrToggle(e.target.checked)}
+                className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
+              />
+              <ScanText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+              <span>OCR Extraction</span>
+            </label>
 
             {/* Auto-Encrypt Toggle */}
             <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -245,3 +357,4 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
     </div>
   );
 };
+

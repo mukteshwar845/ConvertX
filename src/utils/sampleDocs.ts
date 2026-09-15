@@ -116,3 +116,161 @@ export function createSampleImageFile(): Promise<File> {
     }, 'image/png');
   });
 }
+
+/**
+ * Creates a sample scanned document image (simulating a paper document or invoice)
+ */
+export function createSampleScannedDocumentImage(): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 900;
+    canvas.height = 1200;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Paper background with warm subtle scanned tint
+      ctx.fillStyle = '#fbfcf8';
+      ctx.fillRect(0, 0, 900, 1200);
+
+      // Border frame
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(40, 40, 820, 1120);
+
+      // Header Stamp / Badge
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 28px Georgia, serif';
+      ctx.fillText('INTERNAL AUDIT & DISCOVERY MEMORANDUM', 70, 110);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = '16px monospace';
+      ctx.fillText('DOC-REF: #SCAN-2026-X99   |   DATE: SEPTEMBER 15, 2026', 70, 145);
+      ctx.fillText('CLASSIFICATION: CONFIDENTIAL   |   DEPT: SECURITY OPERATIONS', 70, 170);
+
+      // Divider
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(70, 195);
+      ctx.lineTo(830, 195);
+      ctx.stroke();
+
+      // Executive Summary section
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px Georgia, serif';
+      ctx.fillText('1. Executive Summary', 70, 240);
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '16px "Times New Roman", serif';
+      ctx.fillText('This document contains scanned legal and technical findings regarding the migration', 70, 275);
+      ctx.fillText('to client-side encryption architectures. OCR extraction preserves document fidelity.', 70, 305);
+
+      // Key Findings section
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px Georgia, serif';
+      ctx.fillText('2. Core Discoveries & Compliance Requirements', 70, 370);
+
+      const bullets = [
+        '• Zero data leakage confirmed through client-side AES-256-GCM encryption.',
+        '• Optical Character Recognition (OCR) enables legacy scanned paper ingestion.',
+        '• Cross-platform compatibility verified across desktop and mobile browsers.',
+        '• Cryptographic SHA-256 verification ensures non-repudiation and byte integrity.',
+      ];
+
+      ctx.fillStyle = '#334155';
+      ctx.font = '16px "Times New Roman", serif';
+      bullets.forEach((b, i) => {
+        ctx.fillText(b, 85, 410 + i * 36);
+      });
+
+      // Table representation
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px Georgia, serif';
+      ctx.fillText('3. Verification Status Matrix', 70, 580);
+
+      // Table Header
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(70, 605, 760, 35);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.strokeRect(70, 605, 760, 35);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText('Module Name', 90, 628);
+      ctx.fillText('Verification Status', 360, 628);
+      ctx.fillText('Audit Result', 620, 628);
+
+      const tableRows = [
+        ['OCR Text Pipeline', 'OPERATIONAL', 'PASSED 100%'],
+        ['Format Preservation', 'CERTIFIED', 'PASSED 100%'],
+        ['Zero-Knowledge Sync', 'COMPLIANT', 'PASSED 100%'],
+      ];
+
+      tableRows.forEach((row, idx) => {
+        const y = 640 + idx * 35;
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(70, y, 760, 35);
+        ctx.fillStyle = '#334155';
+        ctx.font = '15px sans-serif';
+        ctx.fillText(row[0], 90, y + 23);
+        ctx.fillText(row[1], 360, y + 23);
+        ctx.fillStyle = '#047857';
+        ctx.fillText(row[2], 620, y + 23);
+      });
+
+      // Stamp
+      ctx.save();
+      ctx.translate(680, 840);
+      ctx.rotate(-0.15);
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-100, -35, 200, 70);
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCANNED & AUDITED', 0, -5);
+      ctx.font = '12px monospace';
+      ctx.fillText('OFFICIAL COPY', 0, 18);
+      ctx.restore();
+    }
+
+    canvas.toBlob((blob) => {
+      resolve(new File([blob!], 'Scanned_Memorandum_2026.png', { type: 'image/png' }));
+    }, 'image/png');
+  });
+}
+
+/**
+ * Creates an image-based scanned PDF (contains ONLY an image layer, no text streams)
+ * Ideal for testing the OCR extraction toggle!
+ */
+export async function createSampleScannedPdfFile(): Promise<File> {
+  const imageFile = await createSampleScannedDocumentImage();
+  const { jsPDF } = await import('jspdf');
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Insert purely as an image (simulating a physical scanned page with NO embedded font text)
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+      const pdfBlob = pdf.output('blob');
+
+      resolve(
+        new File([pdfBlob], 'Scanned_Audit_Report.pdf', {
+          type: 'application/pdf',
+        })
+      );
+    };
+    reader.readAsDataURL(imageFile);
+  });
+}
+

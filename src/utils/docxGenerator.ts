@@ -6,7 +6,7 @@ import JSZip from 'jszip';
  */
 export async function createDocxFromContent(
   title: string,
-  sections: Array<{ type: 'heading1' | 'heading2' | 'paragraph' | 'bullet'; text: string; bold?: boolean; italic?: boolean }>
+  sections: Array<{ type: 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet'; text: string; bold?: boolean; italic?: boolean }>
 ): Promise<Blob> {
   const zip = new JSZip();
 
@@ -70,6 +70,14 @@ export async function createDocxFromContent(
       <w:color w:val="2563EB"/>
     </w:rPr>
   </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading3">
+    <w:name w:val="heading 3"/>
+    <w:rPr>
+      <w:b/>
+      <w:sz w:val="24"/>
+      <w:color w:val="475569"/>
+    </w:rPr>
+  </w:style>
 </w:styles>`
   );
 
@@ -109,6 +117,12 @@ export async function createDocxFromContent(
     <w:p>
       <w:pPr><w:pStyle w:val="Heading2"/></w:pPr>
       <w:r><w:rPr><w:b/><w:sz w:val="26"/></w:rPr><w:t>${text}</w:t></w:r>
+    </w:p>`;
+    } else if (s.type === 'heading3') {
+      bodyXml += `
+    <w:p>
+      <w:pPr><w:pStyle w:val="Heading3"/></w:pPr>
+      <w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t>${text}</w:t></w:r>
     </w:p>`;
     } else if (s.type === 'bullet') {
       bodyXml += `

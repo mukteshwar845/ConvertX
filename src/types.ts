@@ -44,6 +44,8 @@ export interface ConversionItem {
     type: 'html' | 'text' | 'pdf' | 'image';
     content: string;
   };
+  ocrEnabled?: boolean;
+  ocrExtracted?: boolean;
 }
 
 export interface HistoryRecord {
@@ -58,6 +60,7 @@ export interface HistoryRecord {
   checksum?: string;
   encrypted: boolean;
   synced: boolean;
+  ocrExtracted?: boolean;
   dataUrl?: string; // Cache for re-download if stored
   previewSnippet?: string;
 }
