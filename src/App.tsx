@@ -167,7 +167,7 @@ export default function App() {
     });
 
     setQueue((prev) => [...prev, ...newItems]);
-    setActiveTab('converter');
+    setActiveTab('documents');
     addToast(
       'info',
       `Queued ${newItems.length} file${newItems.length > 1 ? 's' : ''} for conversion.`,
