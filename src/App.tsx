@@ -11,9 +11,10 @@ import {
   TargetFormat,
   SupportedFormat,
 } from './types';
-import { Navbar } from './components/Navbar';
+import { Navbar, NavTab } from './components/Navbar';
 import { BatchUploader } from './components/BatchUploader';
 import { ConversionCard } from './components/ConversionCard';
+import { ImageConverterView } from './components/ImageConverterView';
 import { HistoryView } from './components/HistoryView';
 import { FileCompareView } from './components/FileCompareView';
 import { ZipCreatorView } from './components/ZipCreatorView';
@@ -36,7 +37,7 @@ export default function App() {
   });
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'converter' | 'compare' | 'zip' | 'history'>('converter');
+  const [activeTab, setActiveTab] = useState<NavTab>('documents');
 
   const [globalTarget, setGlobalTarget] = useState<TargetFormat>('pdf');
   const [ocrEnabled, setOcrEnabled] = useState<boolean>(true);
@@ -390,19 +391,19 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="mx-auto flex-1 w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Converter View */}
-        {activeTab === 'converter' && (
+        {/* Document Converter View */}
+        {activeTab === 'documents' && (
           <div className="space-y-6">
             {/* Hero Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                    Universal File Converter
+                    Document & File Converter
                   </h1>
                 </div>
                 <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-                  Convert Word, PDF, Excel, PowerPoint, Images, and Text instantly in your browser. Fast, accurate, and completely private.
+                  Convert Word, PDF, Excel, PowerPoint, Text, and Data files instantly in your browser with 100% layout fidelity.
                 </p>
               </div>
 
@@ -500,6 +501,14 @@ export default function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Image Converter View */}
+        {activeTab === 'images' && (
+          <ImageConverterView
+            onAddToHistory={(rec) => setHistory((prev) => [rec, ...prev])}
+            addToast={addToast}
+          />
         )}
 
         {/* Compare Files View */}

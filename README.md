@@ -23,35 +23,43 @@
 
 ## 🌟 Key Features
 
-### 1. 📄 Universal Document & Media Conversion
+### 1. 📄 Dedicated Document & File Converter
 - **Verbatim High-Fidelity Output**: Converts documents without altering fonts, paragraph alignments, headings, bullet lists, or tables.
-- **Cross-Category Formats**:
-  - **Documents**: DOCX, PDF, RTF, TXT, HTML, Markdown (`.md`), ODT.
+- **Supported Document Formats**:
+  - **Text & Word**: DOCX, PDF, RTF, TXT, HTML, Markdown (`.md`), ODT.
   - **Spreadsheets**: XLSX, XLS, CSV, ODS, JSON, PDF tables.
   - **Presentations**: PPTX, PPT, ODP, PDF slides.
-  - **Images**: PNG, JPG, WEBP, SVG, BMP, GIF, TIFF.
-- **Batch Processing**: Convert dozens of files simultaneously with one click or package them directly into a single ZIP.
-- **Instant Previews**: Side-by-side modal preview for original vs. converted files with quality match score.
+- **Batch Processing**: Convert dozens of documents concurrently with 1-click execution and instant ZIP downloads.
+- **Visual Previews**: Review source and converted documents before saving.
 
-### 2. 🔍 Side-by-Side File Comparison
+### 2. 🖼️ Dedicated Image Converter & Compressor
+- **Universal Picture Conversion**: Convert photos and graphics between **PNG, JPG, WEBP, PDF, SVG, BMP, and GIF**.
+- **Visual Thumbnail Previews**: Real-time image previews directly in conversion cards with dimensions (e.g. `1920 × 1080 px`).
+- **Adjustable Quality & Resolution**:
+  - Quality slider from 20% to 100% with real-time compression indicators.
+  - Resolution presets: **Original Dimensions**, **4K Ultra HD**, **1080p Full HD**, or **720p HD**.
+  - File size reduction tracking (e.g. `-98% smaller` with WebP encoding).
+- **Batch Image Compression**: Convert entire photo collections and save all in a single compressed ZIP file.
+
+### 3. 🔍 Side-by-Side File Comparison
 - Compare two versions of any file (DOCX, PDF, TXT, CSV, MD, Code, etc.) side by side.
 - Visual line-by-line diff highlighting additions, deletions, and unchanged text.
 - Comprehensive statistics: Word count, character count, total line differences, and similarity percentage score.
 
-### 3. 📦 Instant ZIP Archiver & Directory Compressor
+### 4. 📦 Instant ZIP Archiver & Directory Compressor
 - Compress multiple files or **entire directory folders** (`webkitdirectory`) with hierarchical folder preservation.
 - Configurable compression levels: **Store (0% - Instant)**, **Fast (30%)**, **Balanced (60%)**, or **Maximum (90%)**.
 - Client-side compression powered by `JSZip` — fast, memory-safe, and private.
 
-### 4. 👁️ Optical Character Recognition (OCR)
+### 5. 👁️ Optical Character Recognition (OCR)
 - Read and extract legible text from scanned paper documents, screenshots, and image-only PDFs.
 - Preserves titles, numbered lists, bullet points, and data tables cleanly formatted into Markdown or Word documents.
 
-### 5. 🌗 Day & Night Theme Toggle
+### 6. 🌗 Day & Night Theme Toggle
 - Curated, eye-friendly light mode and deep slate dark mode.
 - Synchronized automatically with system OS color scheme preferences or toggled manually in the navigation bar.
 
-### 6. 🔒 100% Client-Side Privacy
+### 7. 🔒 100% Client-Side Privacy
 - Your private documents, financial sheets, and sensitive photos never leave your device.
 - All file transformations are computed locally using WebAssembly and modern browser APIs.
 
