@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import JSZip from 'jszip';
+import { triggerBlobDownload } from '../utils/downloadHelper';
 
 interface ZipFileEntry {
   file: File;
@@ -124,14 +125,9 @@ export const ZipCreatorView: React.FC = () => {
       setGeneratedSize(zipBlob.size);
       setProgress(100);
 
-      // Auto trigger download
+      // Auto-trigger download with robust helper
       const cleanName = zipName.endsWith('.zip') ? zipName : `${zipName}.zip`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = cleanName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      triggerBlobDownload(zipBlob, cleanName);
     } catch (err) {
       console.error('Failed to create ZIP archive:', err);
     } finally {

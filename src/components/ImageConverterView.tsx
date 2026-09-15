@@ -15,6 +15,7 @@ import {
 import JSZip from 'jszip';
 import { convertImage } from '../utils/imageConverter';
 import { HistoryRecord } from '../types';
+import { triggerBlobDownload } from '../utils/downloadHelper';
 
 export type ImageTargetFormat = 'png' | 'jpg' | 'webp' | 'pdf' | 'bmp' | 'svg';
 
@@ -214,12 +215,7 @@ export const ImageConverterView: React.FC<ImageConverterViewProps> = ({
 
   const handleDownloadSingle = (item: ImageItem) => {
     if (!item.convertedBlob || !item.convertedName) return;
-    const link = document.createElement('a');
-    link.href = item.convertedUrl || URL.createObjectURL(item.convertedBlob);
-    link.download = item.convertedName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerBlobDownload(item.convertedBlob, item.convertedName);
   };
 
   const handleDownloadAllZip = async () => {
@@ -235,12 +231,7 @@ export const ImageConverterView: React.FC<ImageConverterViewProps> = ({
       });
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(zipBlob);
-      link.download = `Converted_Images_${Date.now()}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      triggerBlobDownload(zipBlob, `Converted_Images_${Date.now()}.zip`);
 
       addToast('success', `Downloaded ${completed.length} images in ZIP archive!`);
     } catch (err: any) {

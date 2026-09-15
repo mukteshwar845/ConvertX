@@ -20,6 +20,7 @@ import {
 import JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
 import { HistoryRecord } from '../types';
+import { triggerBlobDownload } from '../utils/downloadHelper';
 
 export type CompressionPreset = 'recommended' | 'extreme' | 'light';
 
@@ -309,12 +310,7 @@ export const FileCompressView: React.FC<FileCompressViewProps> = ({
 
   const handleDownloadSingle = (item: CompressItem) => {
     if (!item.compressedBlob || !item.compressedName) return;
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(item.compressedBlob);
-    link.download = item.compressedName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerBlobDownload(item.compressedBlob, item.compressedName);
   };
 
   const handleDownloadAllZip = async () => {
@@ -330,12 +326,7 @@ export const FileCompressView: React.FC<FileCompressViewProps> = ({
       });
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(zipBlob);
-      link.download = `Compressed_Files_${Date.now()}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      triggerBlobDownload(zipBlob, `Compressed_Files_${Date.now()}.zip`);
 
       addToast('success', `Downloaded ${completed.length} compressed files in ZIP!`);
     } catch (err: any) {

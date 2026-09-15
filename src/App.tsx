@@ -29,6 +29,7 @@ import {
   getAvailableTargets,
 } from './utils/conversionEngine';
 import { clearConversionCache } from './utils/universalConverter';
+import { triggerBlobDownload } from './utils/downloadHelper';
 
 export default function App() {
   // Theme state
@@ -286,21 +287,13 @@ export default function App() {
     setIsConvertingBatch(false);
   };
 
-  // Download Single File
-  const triggerDownload = (blob: Blob, fileName: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  };
+  // Download Single File — uses robust helper to prevent timing-related download failures
 
   const handleDownloadItem = (item: ConversionItem) => {
     if (item.convertedBlob && item.convertedName) {
-      triggerDownload(item.convertedBlob, item.convertedName);
+      triggerBlobDownload(item.convertedBlob, item.convertedName);
+    } else {
+      addToast('warning', 'No converted file found. Please re-convert the file first.', 'Download Failed');
     }
   };
 
@@ -317,7 +310,7 @@ export default function App() {
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
-    triggerDownload(zipBlob, `ConvertX_Batch_${Date.now()}.zip`);
+    triggerBlobDownload(zipBlob, `ConvertX_Batch_${Date.now()}.zip`);
     addToast('success', `Created ZIP archive with ${completedItems.length} files.`, 'Batch Download');
   };
 
@@ -325,14 +318,14 @@ export default function App() {
   const handleDownloadRecord = (record: HistoryRecord) => {
     const queueMatch = queue.find((q) => q.id === record.id && q.convertedBlob);
     if (queueMatch && queueMatch.convertedBlob) {
-      triggerDownload(queueMatch.convertedBlob, record.convertedName);
+      triggerBlobDownload(queueMatch.convertedBlob, record.convertedName);
       return;
     }
 
     addToast(
       'info',
-      'The converted file memory was released. You can re-convert the file anytime from the converter tab.',
-      'Memory Released'
+      'The converted file is no longer in memory. Please re-convert the file from the Converter tab.',
+      'File Not Available'
     );
   };
 
