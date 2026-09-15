@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "DocuConvert - Batch Document Converter",
+  "short_name": "DocuConvert",
+  "description": "Batch document converter with formatting integrity, AES-256 encryption, and cloud sync.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

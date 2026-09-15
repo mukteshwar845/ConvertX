@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad1)" />
+  <!-- Document 1 -->
+  <rect x="110" y="110" width="180" height="250" rx="16" fill="#ffffff" opacity="0.95" />
+  <line x1="145" y1="170" x2="230" y2="170" stroke="#3b82f6" stroke-width="12" stroke-linecap="round" />
+  <line x1="145" y1="210" x2="255" y2="210" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+  <line x1="145" y1="250" x2="240" y2="250" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+  <line x1="145" y1="290" x2="210" y2="290" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+  
+  <!-- Document 2 (Converted) -->
+  <rect x="220" y="170" width="180" height="250" rx="16" fill="#ffffff" filter="drop-shadow(0 12px 24px rgba(0,0,0,0.25))" />
+  <line x1="255" y1="230" x2="340" y2="230" stroke="#ef4444" stroke-width="12" stroke-linecap="round" />
+  <line x1="255" y1="270" x2="365" y2="270" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+  <line x1="255" y1="310" x2="350" y2="310" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+  <line x1="255" y1="350" x2="320" y2="350" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+
+  <!-- Shield / Lock / Sync badge -->
+  <circle cx="380" cy="140" r="44" fill="#10b981" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.2))" />
+  <path d="M380 120 L395 132 L395 147 C395 158 388 166 380 169 C372 166 365 158 365 147 L365 132 Z" fill="#ffffff" />
+</svg>

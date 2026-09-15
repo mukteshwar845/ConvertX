@@ -1,0 +1,6 @@
+{
+  "name": "DocuConvert",
+  "description": "Batch document converter for DOCX, PDF, PPTX, and more with original format integrity, client-side AES-256-GCM encryption, cross-device cloud sync, and conversion history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
