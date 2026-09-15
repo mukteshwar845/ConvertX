@@ -20,6 +20,8 @@ import { FileCompareView } from './components/FileCompareView';
 import { ZipCreatorView } from './components/ZipCreatorView';
 import { PreviewModal } from './components/PreviewModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
+import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
+import { Footer } from './components/Footer';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import {
   detectFormat,
@@ -57,6 +59,7 @@ export default function App() {
   const [previewItem, setPreviewItem] = useState<ConversionItem | HistoryRecord | null>(null);
   const [previewMode, setPreviewMode] = useState<'preview' | 'compare' | 'fidelity'>('preview');
   const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isConvertingBatch, setIsConvertingBatch] = useState<boolean>(false);
@@ -556,27 +559,17 @@ export default function App() {
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-900 transition-colors">
-        <div className="mx-auto flex max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-white">ConvertX</span>
-            <span>•</span>
-            <span>100% Private In-Browser Universal File Converter</span>
-          </div>
+      {/* Professional Multi-Column Footer */}
+      <Footer
+        onNavigateTab={setActiveTab}
+        onOpenPrivacyModal={() => setShowPrivacyModal(true)}
+      />
 
-          <div className="flex items-center gap-4">
-            <span>DOCX</span>
-            <span>PDF</span>
-            <span>PPTX</span>
-            <span>HTML</span>
-            <span>TXT</span>
-            <span>MD</span>
-            <span>PNG</span>
-            <span>JPG</span>
-          </div>
-        </div>
-      </footer>
+      {/* Privacy Policy & Legal Terms Modal */}
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </div>
   );
 }

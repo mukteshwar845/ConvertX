@@ -196,6 +196,7 @@ ConvertX is committed to zero data retention:
 - **No File Uploads**: Conversions happen client-side in your browser's V8 / JavaScript engine.
 - **No Tracking or Third-Party Analytics**: Your converted files and search queries are stored solely in your local browser `localStorage` and never transmitted across the network.
 - **Immediate Memory Cleanup**: File blobs and object URLs are revoked as soon as queues or history are cleared.
+- **Full Legal Policy**: Read our comprehensive [Privacy Policy & Terms](PRIVACY_POLICY.md) for legal guarantees, intellectual property rights, and liability terms.
 
 ---
 
