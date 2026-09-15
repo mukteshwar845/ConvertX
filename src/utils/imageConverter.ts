@@ -87,6 +87,24 @@ export async function convertImage(
     };
   }
 
+  // If Target is SVG
+  if (targetFormat === 'svg') {
+    onProgress?.(85, 'Generating SVG vector container...');
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${targetWidth}" height="${targetHeight}" viewBox="0 0 ${targetWidth} ${targetHeight}">
+  <image width="${targetWidth}" height="${targetHeight}" href="${dataUrl}" />
+</svg>`;
+    const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const previewUrl = URL.createObjectURL(svgBlob);
+    onProgress?.(100, 'Image SVG conversion complete');
+    return {
+      blob: svgBlob,
+      name: `${baseName}.svg`,
+      size: svgBlob.size,
+      previewUrl,
+    };
+  }
+
   // Draw to offscreen canvas
   const canvas = document.createElement('canvas');
   canvas.width = targetWidth;

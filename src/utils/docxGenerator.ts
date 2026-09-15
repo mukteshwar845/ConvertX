@@ -93,15 +93,6 @@ export async function createDocxFromContent(
 
   let bodyXml = '';
 
-  // Title heading
-  if (title) {
-    bodyXml += `
-    <w:p>
-      <w:pPr><w:pStyle w:val="Heading1"/></w:pPr>
-      <w:r><w:rPr><w:b/><w:sz w:val="40"/></w:rPr><w:t>${escapeXml(title)}</w:t></w:r>
-    </w:p>`;
-  }
-
   for (const s of sections) {
     const text = escapeXml(s.text.trim());
     if (!text) continue;

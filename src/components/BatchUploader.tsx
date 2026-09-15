@@ -1,25 +1,20 @@
 import React, { useState, useRef } from 'react';
 import {
   UploadCloud,
-  FilePlus,
-  Layers,
   Sparkles,
   Archive,
   Trash2,
-  Lock,
-  CheckCircle,
   Play,
   ScanText,
+  FileText,
+  Table,
 } from 'lucide-react';
 import { TargetFormat } from '../types';
 import {
   createSampleDocxFile,
   createSampleTxtFile,
-  createSampleImageFile,
   createSampleScannedPdfFile,
-  createSampleScannedDocumentImage,
   createSampleCsvFile,
-  createSampleJsonFile,
 } from '../utils/sampleDocs';
 
 interface BatchUploaderProps {
@@ -32,8 +27,6 @@ interface BatchUploaderProps {
   onClearAll: () => void;
   globalTarget: TargetFormat;
   onGlobalTargetChange: (target: TargetFormat) => void;
-  autoEncrypt: boolean;
-  onAutoEncryptChange: (enabled: boolean) => void;
   ocrEnabled: boolean;
   onOcrToggle: (enabled: boolean) => void;
 }
@@ -48,8 +41,6 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
   onClearAll,
   globalTarget,
   onGlobalTargetChange,
-  autoEncrypt,
-  onAutoEncryptChange,
   ocrEnabled,
   onOcrToggle,
 }) => {
@@ -81,107 +72,52 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
     }
   };
 
-  const loadSampleDocx = async () => {
-    const file = await createSampleDocxFile();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleMd = () => {
-    const file = createSampleTxtFile();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleImg = async () => {
-    const file = await createSampleImageFile();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleScannedPdf = async () => {
-    onOcrToggle(true);
-    const file = await createSampleScannedPdfFile();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleScannedImage = async () => {
-    onOcrToggle(true);
-    const file = await createSampleScannedDocumentImage();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleCsv = () => {
-    const file = createSampleCsvFile();
-    onFilesAdded([file]);
-  };
-
-  const loadSampleJson = () => {
-    const file = createSampleJsonFile();
-    onFilesAdded([file]);
-  };
-
   return (
-    <div className="space-y-4">
-      {/* OCR Text Extraction Toggle Banner */}
-      <div
-        id="ocr-banner"
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-purple-200/80 bg-purple-50/60 p-3.5 text-xs dark:border-purple-900/50 dark:bg-purple-950/25 transition-all shadow-2xs"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-              ocrEnabled
-                ? 'bg-purple-600 text-white shadow-xs'
-                : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-            }`}
-          >
-            <ScanText className="h-5 w-5" />
+    <div className="space-y-5">
+      {/* Visual Step Guide for Non-Tech Users */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 font-bold text-sm">
+            1
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 dark:text-white">
-                Optical Character Recognition (OCR)
-              </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                  ocrEnabled
-                    ? 'bg-purple-200/80 text-purple-900 dark:bg-purple-900/80 dark:text-purple-200'
-                    : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                }`}
-              >
-                {ocrEnabled ? 'Active' : 'Off'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Extract readable text and document hierarchy from image-based PDFs, paper scans, and photo documents.
-            </p>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Select or Drop Files</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Word, PDF, Excel, Images & more</div>
           </div>
         </div>
 
-        <button
-          type="button"
-          id="ocr-toggle-pill"
-          onClick={() => onOcrToggle(!ocrEnabled)}
-          className={`flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition shrink-0 ${
-            ocrEnabled
-              ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700'
-              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
-          }`}
-        >
-          <ScanText className="h-3.5 w-3.5" />
-          <span>{ocrEnabled ? 'OCR Enabled' : 'Enable OCR'}</span>
-        </button>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 font-bold text-sm">
+            2
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Choose Target Format</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">PDF, Word, PNG, CSV & more</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold text-sm">
+            3
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Convert & Download</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">1-click instant local conversion</div>
+          </div>
+        </div>
       </div>
 
-      {/* Drag & Drop Upload Zone */}
+      {/* Main Drag & Drop Zone */}
       <div
         id="drop-zone"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition ${
+        className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 sm:p-10 text-center transition-all duration-200 ${
           isDragging
-            ? 'border-blue-500 bg-blue-50/50 dark:border-blue-400 dark:bg-blue-950/20'
-            : 'border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/50'
+            ? 'border-blue-500 bg-blue-50/70 scale-[1.005] dark:border-blue-400 dark:bg-blue-950/30 shadow-lg shadow-blue-500/10'
+            : 'border-slate-300/90 bg-white/80 hover:border-blue-400 hover:bg-blue-50/20 dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:border-blue-500/60 dark:hover:bg-slate-800/40 shadow-xs'
         }`}
       >
         <input
@@ -193,161 +129,140 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
           className="hidden"
         />
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-inner dark:bg-blue-950/60 dark:text-blue-400">
-          <UploadCloud className="h-7 w-7" />
+        {/* Upload Icon with animated gradient circle */}
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-110">
+          <UploadCloud className="h-8 w-8" />
         </div>
 
-        <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
-          Drop your files here, or <span className="text-blue-600 dark:text-blue-400 underline">browse</span>
+        <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+          Drag & Drop your files here, or{' '}
+          <span className="text-blue-600 dark:text-blue-400 underline decoration-2 underline-offset-2">
+            Browse Files
+          </span>
         </h3>
-        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 max-w-lg">
-          Universal conversion across Documents (PDF, Word), Presentations, Spreadsheets (Excel, CSV), Images, and Data with fidelity preservation.
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          Supports Documents, Spreadsheets, Presentations, Photos & Data files.
         </p>
 
-        {/* Supported Format Badges */}
-        <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-xl">
+        {/* Visual Supported Formats Chips */}
+        <div className="mt-5 flex flex-wrap justify-center gap-1.5 max-w-xl">
           {[
-            { label: 'PDF / DOCX', color: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' },
-            { label: 'XLSX / CSV', color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' },
-            { label: 'PPTX / ODP', color: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' },
-            { label: 'PNG / JPG / WEBP', color: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300' },
-            { label: 'HTML / MD / JSON', color: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' },
-          ].map((cat) => (
+            { label: 'PDF Document', ext: 'PDF', bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200/60 dark:border-rose-900/60' },
+            { label: 'Word Document', ext: 'DOCX', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/60' },
+            { label: 'Excel & Sheet', ext: 'XLSX / CSV', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/60' },
+            { label: 'PowerPoint', ext: 'PPTX', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/60' },
+            { label: 'Images', ext: 'PNG / JPG / WEBP', bg: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300 border-cyan-200/60 dark:border-cyan-900/60' },
+            { label: 'Text & Code', ext: 'MD / HTML / JSON', bg: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 border-violet-200/60 dark:border-violet-900/60' },
+          ].map((fmt) => (
             <span
-              key={cat.label}
-              className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${cat.color}`}
+              key={fmt.ext}
+              className={`rounded-xl border px-2.5 py-1 text-[11px] font-bold ${fmt.bg}`}
             >
-              {cat.label}
+              {fmt.ext}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Quick Test Samples */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
-        <div className="flex items-center gap-1 font-medium">
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          <span>Quick test samples:</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={loadSampleScannedPdf}
-            className="rounded-lg border border-purple-200 bg-purple-50/80 px-2.5 py-1 font-semibold text-purple-800 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition flex items-center gap-1"
-            title="Load an image-based scanned PDF with zero embedded text to test OCR"
-          >
-            <ScanText className="h-3 w-3" />
-            + Scanned PDF (OCR)
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleDocx}
-            className="rounded-lg border border-blue-200 bg-blue-50/80 px-2.5 py-1 font-medium text-blue-800 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition"
-          >
-            + Sample DOCX
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleCsv}
-            className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition flex items-center gap-1"
-            title="Load a financial tabular spreadsheet (CSV) to test XLSX / PDF / Table conversions"
-          >
-            + Financial CSV (Sheet)
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleMd}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
-          >
-            + Sample Markdown
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleJson}
-            className="rounded-lg border border-sky-200 bg-sky-50/80 px-2.5 py-1 font-semibold text-sky-800 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/60 transition"
-          >
-            + JSON Records
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleScannedImage}
-            className="rounded-lg border border-teal-200 bg-teal-50/80 px-2.5 py-1 font-semibold text-teal-800 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-900/60 transition flex items-center gap-1"
-          >
-            <ScanText className="h-3 w-3" />
-            + Scanned Doc Image
-          </button>
-          <button
-            type="button"
-            onClick={loadSampleImg}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition"
-          >
-            + Slide Image
-          </button>
+      {/* Quick Test Samples Bar */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3.5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+            <Sparkles className="h-4 w-4 text-amber-500" />
+            <span>Try with ready sample files:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={async () => onFilesAdded([await createSampleDocxFile()])}
+              className="flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition active:scale-95"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Word Doc (.docx)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onFilesAdded([createSampleCsvFile()])}
+              className="flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition active:scale-95"
+            >
+              <Table className="h-3.5 w-3.5" />
+              <span>Spreadsheet (.csv)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                onOcrToggle(true);
+                onFilesAdded([await createSampleScannedPdfFile()]);
+              }}
+              className="flex items-center gap-1 rounded-xl border border-purple-200 bg-purple-50/80 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/60 transition active:scale-95"
+            >
+              <ScanText className="h-3.5 w-3.5" />
+              <span>Scanned PDF (OCR)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onFilesAdded([createSampleTxtFile()])}
+              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition active:scale-95"
+            >
+              <span>Markdown (.md)</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Batch Control Toolbar (Visible when files are in queue) */}
+      {/* Batch Control Toolbar (Active when files are queued) */}
       {queueLength > 0 && (
         <div
           id="batch-toolbar"
-          className="flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/30 sm:flex-row sm:items-center sm:justify-between"
+          className="sticky top-20 z-30 flex flex-col gap-3 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/95 to-indigo-50/95 p-4 dark:border-blue-900/60 dark:from-slate-900/95 dark:to-blue-950/95 shadow-md backdrop-blur-md sm:flex-row sm:items-center sm:justify-between transition-all"
         >
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Batch Queue ({queueLength} files)
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-600 text-white font-extrabold text-xs">
+                {queueLength}
+              </span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                {queueLength === 1 ? '1 File Ready' : `${queueLength} Files in Queue`}
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-              <span>Set all to:</span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+              <span className="font-semibold">Convert all to:</span>
               <select
                 value={globalTarget}
                 onChange={(e) => onGlobalTargetChange(e.target.value as TargetFormat)}
-                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-800 shadow-sm focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
-                <option value="pdf">PDF (.pdf)</option>
-                <option value="pptx">PowerPoint (.pptx)</option>
-                <option value="docx">Word (.docx)</option>
-                <option value="txt">Text (.txt)</option>
-                <option value="html">HTML (.html)</option>
+                <option value="pdf">PDF Document (.pdf)</option>
+                <option value="docx">Word Document (.docx)</option>
+                <option value="pptx">PowerPoint Presentation (.pptx)</option>
+                <option value="png">PNG Image (.png)</option>
+                <option value="jpg">JPEG Image (.jpg)</option>
+                <option value="txt">Plain Text (.txt)</option>
+                <option value="html">Web Page (.html)</option>
                 <option value="md">Markdown (.md)</option>
+                <option value="csv">Table (.csv)</option>
               </select>
             </div>
 
-            {/* OCR Toggle in Toolbar */}
-            <label
-              id="batch-ocr-toggle-label"
-              className={`flex items-center gap-1.5 cursor-pointer text-xs font-semibold px-2 py-1 rounded-md border shadow-2xs transition ${
+            {/* OCR Toggle */}
+            <button
+              type="button"
+              onClick={() => onOcrToggle(!ocrEnabled)}
+              className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition ${
                 ocrEnabled
-                  ? 'border-purple-300 bg-purple-100/90 text-purple-900 dark:border-purple-800 dark:bg-purple-950/80 dark:text-purple-200'
-                  : 'border-slate-200 bg-white/80 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'border border-slate-300 bg-white/80 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
               }`}
-              title="Extract text from image-based PDFs and scanned documents"
+              title="Optical Character Recognition: Read text inside scanned documents"
             >
-              <input
-                id="batch-ocr-checkbox"
-                type="checkbox"
-                checked={ocrEnabled}
-                onChange={(e) => onOcrToggle(e.target.checked)}
-                className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 h-3.5 w-3.5"
-              />
-              <ScanText className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-              <span>OCR Extraction</span>
-            </label>
-
-            {/* Auto-Encrypt Toggle */}
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={autoEncrypt}
-                onChange={(e) => onAutoEncryptChange(e.target.checked)}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <Lock className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Auto-Encrypt (E2EE)</span>
-            </label>
+              <ScanText className="h-3.5 w-3.5" />
+              <span>{ocrEnabled ? 'OCR On' : 'OCR Off'}</span>
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -356,22 +271,22 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
               id="batch-convert-btn"
               onClick={onConvertAll}
               disabled={isConvertingBatch}
-              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 transition"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 transition active:scale-95"
             >
               <Play className="h-3.5 w-3.5 fill-current" />
-              {isConvertingBatch ? 'Converting Batch...' : `Convert All (${queueLength})`}
+              <span>{isConvertingBatch ? 'Converting...' : `Convert All (${queueLength})`}</span>
             </button>
 
-            {/* Download All as ZIP (When any converted) */}
+            {/* Download ZIP */}
             {completedCount > 0 && (
               <button
                 id="batch-download-zip-btn"
                 onClick={onDownloadZip}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
-                title="Download all converted files in a ZIP archive"
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-700 transition active:scale-95"
+                title="Download all converted files in one ZIP file"
               >
                 <Archive className="h-3.5 w-3.5" />
-                <span>ZIP Download ({completedCount})</span>
+                <span>Download ZIP ({completedCount})</span>
               </button>
             )}
 
@@ -379,10 +294,10 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
             <button
               onClick={onClearAll}
               disabled={isConvertingBatch}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition"
-              title="Clear queue"
+              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-2 text-xs font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+              title="Clear all queued files"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -390,4 +305,3 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
     </div>
   );
 };
-

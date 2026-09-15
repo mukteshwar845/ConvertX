@@ -175,12 +175,7 @@ export interface ConversionItem {
   convertedUrl?: string;
   convertedSize?: number;
   convertedName?: string;
-  encrypted?: boolean;
-  encryptedPayload?: string;
-  iv?: string;
-  salt?: string;
   checksum?: string;
-  synced?: boolean;
   timestamp: number;
   durationMs?: number;
   cached?: boolean;
@@ -211,48 +206,10 @@ export interface HistoryRecord {
   timestamp: number;
   durationMs?: number;
   checksum?: string;
-  encrypted: boolean;
-  synced: boolean;
   ocrExtracted?: boolean;
   cached?: boolean;
   fidelityScore?: number;
   dataUrl?: string;
   previewSnippet?: string;
-}
-
-export interface SyncedCloudDocument {
-  id: string;
-  name: string;
-  originalName: string;
-  format: string;
-  originalFormat: string;
-  size: number;
-  encrypted: boolean;
-  encryptedPayload?: string;
-  iv?: string;
-  salt?: string;
-  checksum?: string;
-  createdAt: number;
-  deviceLabel: string;
-}
-
-export interface EncryptionConfig {
-  enabled: boolean;
-  passphrase: string;
-  autoSync: boolean;
-  roomCode: string;
-  deviceLabel: string;
-}
-
-export interface TelemetryStats {
-  totalConversions: number;
-  successfulConversions: number;
-  failedConversions: number;
-  cacheHits: number;
-  retriedConversions: number;
-  averageDurationMs: number;
-  averageFidelityScore: number;
-  formatUsage: Record<string, number>;
-  totalBytesProcessed: number;
 }
 

@@ -14,13 +14,13 @@ function calculateTextSimilarity(
     return { similarity: 0, matchedWords: 0, totalWords: sourceText ? sourceText.split(/\s+/).length : 0, missingWords: 0, extraWords: 0 };
   }
 
-  // Tokenize words (case-insensitive alphanumeric tokens)
+  // Tokenize words (Unicode aware for multi-lingual and CJK script support)
   const tokenize = (str: string) =>
     str
       .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
       .split(/\s+/)
-      .filter((w) => w.length > 1);
+      .filter((w) => w.length > 0);
 
   const sourceWords = tokenize(sourceText);
   const targetWords = tokenize(targetText);
@@ -145,7 +145,7 @@ export function evaluateDocumentFidelity(
 
   if (sourceHeadings > 0) {
     if (targetHeadings >= sourceHeadings * 0.8) {
-      fontsScore = 98;
+      fontsScore = 100;
       checks.push({
         id: 'chk-headings',
         name: 'Typography Hierarchy & Font Weight',
@@ -162,7 +162,7 @@ export function evaluateDocumentFidelity(
       });
     }
   } else {
-    fontsScore = 99;
+    fontsScore = 100;
     checks.push({
       id: 'chk-headings',
       name: 'Typography Hierarchy',
@@ -176,7 +176,7 @@ export function evaluateDocumentFidelity(
   if (source.tablesCount > 0) {
     const targetTables = targetInfo.targetTablesCount ?? source.tablesCount;
     if (targetTables >= source.tablesCount) {
-      tablesScore = 99;
+      tablesScore = 100;
       checks.push({
         id: 'chk-tables',
         name: 'Tabular Data & Cell Dimensions',

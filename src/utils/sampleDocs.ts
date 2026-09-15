@@ -29,11 +29,11 @@ export async function createSampleDocxFile(): Promise<File> {
     },
     {
       type: 'bullet' as const,
-      text: 'Web Crypto API AES-256-GCM zero-knowledge client encryption before cloud sync.',
+      text: 'Side-by-side file comparison with visual difference highlighting and similarity scoring.',
     },
     {
       type: 'bullet' as const,
-      text: 'Cross-device cloud synchronization supporting iOS, Android, and Desktop.',
+      text: 'Instant ZIP archiving for multiple files and complete folder directories.',
     },
     {
       type: 'heading2' as const,
@@ -58,10 +58,11 @@ export function createSampleTxtFile(): File {
 ## 1. System Goals
 DocuConvert enables zero-latency document transformations across multiple platforms.
 
-## 2. Security Guarantees
-- End-to-End Encryption with AES-256-GCM
-- SHA-256 cryptographic verification checksums
-- Cloud synchronization with zero-knowledge rooms
+## 2. Core Capabilities
+- High-accuracy document formatting preservation
+- Side-by-side file comparison and difference analysis
+- Instant client-side ZIP folder archiving
+- 100% browser-based private document conversions
 
 ## 3. Supported Workflows
 1. DOCX to PDF (Preserving typography and structure)
@@ -161,19 +162,19 @@ export function createSampleScannedDocumentImage(): Promise<File> {
 
       ctx.fillStyle = '#334155';
       ctx.font = '16px "Times New Roman", serif';
-      ctx.fillText('This document contains scanned legal and technical findings regarding the migration', 70, 275);
-      ctx.fillText('to client-side encryption architectures. OCR extraction preserves document fidelity.', 70, 305);
+      ctx.fillText('This document contains scanned findings regarding document processing and format accuracy.', 70, 275);
+      ctx.fillText('OCR extraction preserves document typography and structure.', 70, 305);
 
       // Key Findings section
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 20px Georgia, serif';
-      ctx.fillText('2. Core Discoveries & Compliance Requirements', 70, 370);
+      ctx.fillText('2. Core Features & Processing Results', 70, 370);
 
       const bullets = [
-        '• Zero data leakage confirmed through client-side AES-256-GCM encryption.',
+        '• 100% private in-browser document processing with zero server uploads.',
         '• Optical Character Recognition (OCR) enables legacy scanned paper ingestion.',
-        '• Cross-platform compatibility verified across desktop and mobile browsers.',
-        '• Cryptographic SHA-256 verification ensures non-repudiation and byte integrity.',
+        '• Side-by-side comparison highlights text edits and calculates similarity.',
+        '• High-speed ZIP compression for batch archiving of files and directories.',
       ];
 
       ctx.fillStyle = '#334155';
@@ -202,7 +203,7 @@ export function createSampleScannedDocumentImage(): Promise<File> {
       const tableRows = [
         ['OCR Text Pipeline', 'OPERATIONAL', 'PASSED 100%'],
         ['Format Preservation', 'CERTIFIED', 'PASSED 100%'],
-        ['Zero-Knowledge Sync', 'COMPLIANT', 'PASSED 100%'],
+        ['ZIP Compression Engine', 'OPERATIONAL', 'PASSED 100%'],
       ];
 
       tableRows.forEach((row, idx) => {

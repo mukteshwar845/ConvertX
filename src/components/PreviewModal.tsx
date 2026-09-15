@@ -102,7 +102,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             {/* View Mode Switcher */}
             <div className="flex items-center rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
               <button
@@ -146,26 +146,28 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
               )}
             </div>
 
-            <button
-              onClick={() => onDownload(item)}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition ml-1"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Save</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
-              aria-label="Close modal (Escape)"
-              title="Close (Esc)"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => onDownload(item)}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Save</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+                aria-label="Close modal (Escape)"
+                title="Close (Esc)"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Modal Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-slate-950/60">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 bg-slate-100 dark:bg-slate-950/60">
           {/* TAB 1: CONVERTED PREVIEW */}
           {activeTab === 'preview' && (
             <div className="h-full">

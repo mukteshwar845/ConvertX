@@ -6,19 +6,13 @@ import {
   Trash2,
   Eye,
   Archive,
-  ShieldCheck,
-  Cloud,
-  FileText,
-  File,
-  FileSpreadsheet,
-  FileCode,
-  CheckCircle2,
   Calendar,
   ScanText,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { HistoryRecord } from '../types';
 import { getFormatVisual } from './ConversionCard';
-import { Zap, Sparkles } from 'lucide-react';
 
 interface HistoryViewProps {
   records: HistoryRecord[];
@@ -57,19 +51,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   });
 
   const totalBytes = records.reduce((acc, r) => acc + (r.convertedSize || 0), 0);
-
-  const getFormatIcon = (format: string) => {
-    switch (format) {
-      case 'docx':
-        return <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
-      case 'pdf':
-        return <File className="h-5 w-5 text-red-500 dark:text-red-400" />;
-      case 'pptx':
-        return <FileSpreadsheet className="h-5 w-5 text-amber-500 dark:text-amber-400" />;
-      default:
-        return <FileCode className="h-5 w-5 text-purple-500 dark:text-purple-400" />;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -203,33 +184,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                         })}
                       </span>
 
-                      {rec.encrypted && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                          <ShieldCheck className="h-3 w-3" />
-                          AES-256
-                        </span>
-                      )}
-
                       {rec.ocrExtracted && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
                           <ScanText className="h-3 w-3" />
                           OCR Extracted
                         </span>
                       )}
-
-                      {rec.synced && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-                          <Cloud className="h-3 w-3" />
-                          Synced
-                        </span>
-                      )}
                     </div>
-
-                    {rec.checksum && (
-                      <div className="mt-1 font-mono text-[10px] text-slate-400 dark:text-slate-500">
-                        SHA-256: {rec.checksum.slice(0, 16)}...
-                      </div>
-                    )}
                   </div>
                 </div>
 

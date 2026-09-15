@@ -1,22 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import JSZip from 'jszip';
 import {
-  FileText,
   ShieldCheck,
-  Cloud,
-  CheckCircle2,
   Sparkles,
-  Lock,
-  Layers,
-  Archive,
-  Download,
-  Smartphone,
-  Info,
+  Columns2,
 } from 'lucide-react';
 import {
   ConversionItem,
   HistoryRecord,
-  SyncedCloudDocument,
   TargetFormat,
   SupportedFormat,
 } from './types';
@@ -24,8 +15,8 @@ import { Navbar } from './components/Navbar';
 import { BatchUploader } from './components/BatchUploader';
 import { ConversionCard } from './components/ConversionCard';
 import { HistoryView } from './components/HistoryView';
-import { CloudVaultView } from './components/CloudVaultView';
-import { SecurityView } from './components/SecurityView';
+import { FileCompareView } from './components/FileCompareView';
+import { ZipCreatorView } from './components/ZipCreatorView';
 import { PreviewModal } from './components/PreviewModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
@@ -35,13 +26,6 @@ import {
   getAvailableTargets,
 } from './utils/conversionEngine';
 import { clearConversionCache } from './utils/universalConverter';
-import {
-  encryptBuffer,
-  decryptBuffer,
-  generateSyncCode,
-  generateDefaultPassphrase,
-  computeChecksum,
-} from './utils/crypto';
 
 export default function App() {
   // Theme state
@@ -52,47 +36,10 @@ export default function App() {
   });
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'converter' | 'history' | 'vault' | 'security'>('converter');
+  const [activeTab, setActiveTab] = useState<'converter' | 'compare' | 'zip' | 'history'>('converter');
 
-  // Encryption & Sync Settings
-  const [passphrase, setPassphrase] = useState<string>(() => {
-    const saved = localStorage.getItem('docuconvert_passphrase');
-    if (saved) return saved;
-    const fresh = generateDefaultPassphrase();
-    localStorage.setItem('docuconvert_passphrase', fresh);
-    return fresh;
-  });
-
-  const [roomCode, setRoomCode] = useState<string>(() => {
-    const saved = localStorage.getItem('docuconvert_room');
-    if (saved) return saved;
-    const fresh = generateSyncCode();
-    localStorage.setItem('docuconvert_room', fresh);
-    return fresh;
-  });
-
-  const [deviceLabel, setDeviceLabel] = useState<string>(() => {
-    const saved = localStorage.getItem('docuconvert_device');
-    if (saved) return saved;
-    const ua = navigator.userAgent;
-    if (/iPhone|iPad|iPod/.test(ua)) return 'Apple iOS Device';
-    if (/Android/.test(ua)) return 'Android Device';
-    if (/Macintosh/.test(ua)) return 'macOS Device';
-    if (/Windows/.test(ua)) return 'Windows PC';
-    return 'Web Client';
-  });
-
-  const [autoSync, setAutoSync] = useState<boolean>(() => {
-    const saved = localStorage.getItem('docuconvert_autosync');
-    return saved !== null ? saved === 'true' : true;
-  });
-
-  const [autoEncrypt, setAutoEncrypt] = useState<boolean>(true);
   const [globalTarget, setGlobalTarget] = useState<TargetFormat>('pdf');
-  const [ocrEnabled, setOcrEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem('docuconvert_ocr');
-    return saved !== null ? saved === 'true' : true;
-  });
+  const [ocrEnabled, setOcrEnabled] = useState<boolean>(true);
 
   // File queues & History
   const [queue, setQueue] = useState<ConversionItem[]>([]);
@@ -104,10 +51,6 @@ export default function App() {
       return [];
     }
   });
-
-  // Cloud synced docs
-  const [cloudDocs, setCloudDocs] = useState<SyncedCloudDocument[]>([]);
-  const [isCloudLoading, setIsCloudLoading] = useState<boolean>(false);
 
   // Modals
   const [previewItem, setPreviewItem] = useState<ConversionItem | HistoryRecord | null>(null);
@@ -152,27 +95,6 @@ export default function App() {
     }
   }, [isDark]);
 
-  // Persist settings
-  useEffect(() => {
-    localStorage.setItem('docuconvert_passphrase', passphrase);
-  }, [passphrase]);
-
-  useEffect(() => {
-    localStorage.setItem('docuconvert_room', roomCode);
-  }, [roomCode]);
-
-  useEffect(() => {
-    localStorage.setItem('docuconvert_device', deviceLabel);
-  }, [deviceLabel]);
-
-  useEffect(() => {
-    localStorage.setItem('docuconvert_autosync', String(autoSync));
-  }, [autoSync]);
-
-  useEffect(() => {
-    localStorage.setItem('docuconvert_ocr', String(ocrEnabled));
-  }, [ocrEnabled]);
-
   useEffect(() => {
     try {
       localStorage.setItem('docuconvert_history', JSON.stringify(history));
@@ -196,29 +118,6 @@ export default function App() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
-
-  // Fetch Cloud Documents
-  const fetchCloudDocs = useCallback(async () => {
-    if (!roomCode) return;
-    try {
-      setIsCloudLoading(true);
-      const res = await fetch(`/api/sync/${encodeURIComponent(roomCode)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.documents && Array.isArray(data.documents)) {
-          setCloudDocs(data.documents);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch cloud docs:', err);
-    } finally {
-      setIsCloudLoading(false);
-    }
-  }, [roomCode]);
-
-  useEffect(() => {
-    fetchCloudDocs();
-  }, [fetchCloudDocs]);
 
   // Add files to batch queue
   const handleFilesAdded = (files: File[]) => {
@@ -321,21 +220,6 @@ export default function App() {
       const durationMs = Date.now() - startTime;
       const convertedUrl = URL.createObjectURL(result.blob);
 
-      let encryptedPayload: string | undefined;
-      let iv: string | undefined;
-      let salt: string | undefined;
-      let checksum: string | undefined;
-
-      const arrayBuf = await result.blob.arrayBuffer();
-      checksum = await computeChecksum(arrayBuf);
-
-      if (autoEncrypt) {
-        const enc = await encryptBuffer(arrayBuf, passphrase);
-        encryptedPayload = enc.ciphertextBase64;
-        iv = enc.ivBase64;
-        salt = enc.saltBase64;
-      }
-
       // Update queue item
       setQueue((prev) =>
         prev.map((i) =>
@@ -349,11 +233,6 @@ export default function App() {
                 convertedSize: result.size,
                 convertedName: result.name,
                 durationMs,
-                encrypted: autoEncrypt,
-                encryptedPayload,
-                iv,
-                salt,
-                checksum,
                 ocrExtracted: result.ocrUsed,
                 extractedPreview: result.preview,
                 fidelity: result.fidelity,
@@ -374,29 +253,13 @@ export default function App() {
         sourceFormat: targetItem.sourceFormat,
         targetFormat: targetItem.targetFormat,
         timestamp: Date.now(),
-        checksum,
-        encrypted: autoEncrypt,
-        synced: false,
+        durationMs,
         ocrExtracted: result.ocrUsed,
         cached: result.cached,
         fidelityScore: result.fidelity?.overallScore,
         previewSnippet: result.preview.type === 'text' ? result.preview.content.slice(0, 300) : undefined,
       };
       setHistory((prev) => [histRecord, ...prev]);
-
-      // Auto-sync if enabled
-      if (autoSync) {
-        await syncItemToCloud({
-          ...targetItem,
-          convertedName: result.name,
-          convertedSize: result.size,
-          encrypted: autoEncrypt,
-          encryptedPayload,
-          iv,
-          salt,
-          checksum,
-        });
-      }
     } catch (err: any) {
       console.error('Conversion error:', err);
       setQueue((prev) =>
@@ -417,96 +280,6 @@ export default function App() {
       await convertSingle(item.id);
     }
     setIsConvertingBatch(false);
-  };
-
-  // Sync to Cloud Vault
-  const syncItemToCloud = async (item: Partial<ConversionItem>) => {
-    if (!item.convertedName || !item.id) return;
-    try {
-      const payload: SyncedCloudDocument = {
-        id: item.id,
-        name: item.convertedName,
-        originalName: item.originalName || item.convertedName,
-        format: item.targetFormat || 'pdf',
-        originalFormat: item.sourceFormat || 'docx',
-        size: item.convertedSize || 0,
-        encrypted: !!item.encrypted,
-        encryptedPayload: item.encryptedPayload,
-        iv: item.iv,
-        salt: item.salt,
-        checksum: item.checksum,
-        createdAt: Date.now(),
-        deviceLabel,
-      };
-
-      const res = await fetch(`/api/sync/${encodeURIComponent(roomCode)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        // Mark as synced
-        setQueue((prev) =>
-          prev.map((i) => (i.id === item.id ? { ...i, synced: true } : i))
-        );
-        setHistory((prev) =>
-          prev.map((h) => (h.id === item.id ? { ...h, synced: true } : h))
-        );
-        fetchCloudDocs();
-      }
-    } catch (err) {
-      console.error('Failed to sync to cloud:', err);
-    }
-  };
-
-  // Decrypt & Download from Cloud Vault
-  const handleDecryptAndDownloadCloud = async (doc: SyncedCloudDocument) => {
-    try {
-      if (doc.encrypted && doc.encryptedPayload && doc.iv && doc.salt) {
-        const decryptedBuf = await decryptBuffer(
-          doc.encryptedPayload,
-          doc.iv,
-          doc.salt,
-          passphrase
-        );
-        const mimeType = doc.format === 'pdf' ? 'application/pdf' : 'application/octet-stream';
-        const blob = new Blob([decryptedBuf], { type: mimeType });
-        triggerDownload(blob, doc.name);
-        addToast('success', `Decrypted and downloaded "${doc.name}".`, 'File Decrypted');
-      } else {
-        addToast('warning', 'Document is missing encryption payload or already expired.', 'Download Notice');
-      }
-    } catch (err: any) {
-      addToast('error', `Decryption failed: Please ensure your Master Encryption Key matches. (${err.message})`, 'Decryption Error');
-    }
-  };
-
-  // Delete from Cloud Room
-  const handleDeleteCloudDoc = async (docId: string) => {
-    try {
-      await fetch(`/api/sync/${encodeURIComponent(roomCode)}/${docId}`, {
-        method: 'DELETE',
-      });
-      fetchCloudDocs();
-      addToast('info', 'Document removed from cloud sync room.', 'Cloud Sync');
-    } catch (err) {
-      console.error('Failed to delete cloud doc:', err);
-    }
-  };
-
-  // Clear Cloud Room
-  const handleClearRoom = async () => {
-    if (!window.confirm('Are you sure you want to clear all synced documents from this room?')) return;
-    try {
-      await fetch(`/api/sync/${encodeURIComponent(roomCode)}/clear`, {
-        method: 'POST',
-      });
-      fetchCloudDocs();
-      addToast('info', 'All documents cleared from cloud sync room.', 'Room Reset');
-    } catch (err) {
-      console.error('Failed to clear cloud room:', err);
-    }
   };
 
   // Download Single File
@@ -540,23 +313,15 @@ export default function App() {
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
-    triggerDownload(zipBlob, `DocuConvert_Batch_${Date.now()}.zip`);
+    triggerDownload(zipBlob, `ConvertX_Batch_${Date.now()}.zip`);
     addToast('success', `Created ZIP archive with ${completedItems.length} files.`, 'Batch Download');
   };
 
   // Download record from history
   const handleDownloadRecord = (record: HistoryRecord) => {
-    // If active in current queue, use its blob
     const queueMatch = queue.find((q) => q.id === record.id && q.convertedBlob);
     if (queueMatch && queueMatch.convertedBlob) {
       triggerDownload(queueMatch.convertedBlob, record.convertedName);
-      return;
-    }
-
-    // If synced in cloud room, attempt decrypt & download
-    const cloudMatch = cloudDocs.find((c) => c.id === record.id);
-    if (cloudMatch) {
-      handleDecryptAndDownloadCloud(cloudMatch);
       return;
     }
 
@@ -619,11 +384,8 @@ export default function App() {
         isDark={isDark}
         setIsDark={setIsDark}
         historyCount={history.length}
-        syncedCount={cloudDocs.length}
-        roomCode={roomCode}
         isInstallable={!!deferredPrompt || isIOS}
         onInstallClick={() => setShowInstallModal(true)}
-        isEncrypted={autoEncrypt}
       />
 
       {/* Main Content Area */}
@@ -631,26 +393,28 @@ export default function App() {
         {/* Converter View */}
         {activeTab === 'converter' && (
           <div className="space-y-6">
-            {/* Header Description */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {/* Hero Header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                  Batch Document Converter
-                </h1>
-                <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  Direct conversion for DOCX, PDF, PPTX, and more with original text formatting integrity and client-side encryption.
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                    Universal File Converter
+                  </h1>
+                </div>
+                <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+                  Convert Word, PDF, Excel, PowerPoint, Images, and Text instantly in your browser. Fast, accurate, and completely private.
                 </p>
               </div>
 
-              {/* Status Pill */}
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                  AES-256 E2EE Active
+              {/* Status Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span>100% Private (No Uploads)</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-                  <Cloud className="h-3.5 w-3.5 text-blue-500" />
-                  Cloud Sync Ready
+                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                  <Sparkles className="h-4 w-4 text-blue-500" />
+                  <span>High Fidelity Engine</span>
                 </span>
               </div>
             </div>
@@ -667,7 +431,6 @@ export default function App() {
               globalTarget={globalTarget}
               onGlobalTargetChange={(tgt) => {
                 setGlobalTarget(tgt);
-                // Also update existing queued files if they support it
                 setQueue((prev) =>
                   prev.map((i) => {
                     const targets = getAvailableTargets(i.sourceFormat, ocrEnabled);
@@ -675,21 +438,19 @@ export default function App() {
                   })
                 );
               }}
-              autoEncrypt={autoEncrypt}
-              onAutoEncryptChange={setAutoEncrypt}
               ocrEnabled={ocrEnabled}
               onOcrToggle={handleOcrToggle}
             />
 
             {/* Queue Cards */}
             {queue.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  <span>Files in Batch ({queue.length})</span>
-                  <span>{completedCount} of {queue.length} completed</span>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>Selected Files ({queue.length})</span>
+                  <span>{completedCount} of {queue.length} ready</span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {queue.map((item) => (
                     <ConversionCard
                       key={item.id}
@@ -699,7 +460,6 @@ export default function App() {
                       onDownload={handleDownloadItem}
                       onPreview={(itm) => handleOpenPreview(itm, 'preview')}
                       onCompare={(itm) => handleOpenPreview(itm, 'compare')}
-                      onSyncToCloud={syncItemToCloud}
                       onRemove={handleRemoveQueueItem}
                     />
                   ))}
@@ -708,39 +468,45 @@ export default function App() {
             )}
 
             {/* Feature Highlights Bento */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase">
+            <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-slate-200/80 dark:border-slate-800/80">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+                <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
                   <Sparkles className="h-4 w-4" />
-                  <span>Formatting Integrity</span>
+                  <span>High Quality & Formatting</span>
                 </div>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300">
-                  Maintains headings, bullet lists, typography, tables, and internal structures without alterations during direct conversions.
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Preserves typography, lists, headings, tables, and colors so your output document looks clean and professional.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase">
-                  <Lock className="h-4 w-4" />
-                  <span>End-to-End Encryption</span>
+              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+                <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>100% Client-Side Privacy</span>
                 </div>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300">
-                  Every file is secured client-side using Web Crypto AES-256-GCM. Your private passphrase never leaves your device.
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Files are processed directly inside your browser. No third-party servers see or store your private documents.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-xs uppercase">
-                  <Cloud className="h-4 w-4" />
-                  <span>Cross-Device Cloud Sync</span>
+              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
+                <div className="flex items-center gap-2.5 text-purple-600 dark:text-purple-400 font-bold text-xs uppercase tracking-wider">
+                  <Columns2 className="h-4 w-4" />
+                  <span>Compare & ZIP Archiver</span>
                 </div>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300">
-                  Pair with your phone, tablet, or secondary computer using your secure 6-character room code for seamless access.
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Compare two documents side-by-side with similarity scoring, or package files and entire folders into a single ZIP archive.
                 </p>
               </div>
             </div>
           </div>
         )}
+
+        {/* Compare Files View */}
+        {activeTab === 'compare' && <FileCompareView />}
+
+        {/* Zip Creator View */}
+        {activeTab === 'zip' && <ZipCreatorView />}
 
         {/* History View */}
         {activeTab === 'history' && (
@@ -751,36 +517,6 @@ export default function App() {
             onDeleteRecord={handleDeleteHistoryRecord}
             onClearHistory={handleClearHistory}
             onDownloadAllZip={handleDownloadAllZip}
-          />
-        )}
-
-        {/* Cloud Vault View */}
-        {activeTab === 'vault' && (
-          <CloudVaultView
-            roomCode={roomCode}
-            onRoomCodeChange={(newCode) => {
-              setRoomCode(newCode);
-              setTimeout(() => fetchCloudDocs(), 100);
-            }}
-            deviceLabel={deviceLabel}
-            onDeviceLabelChange={setDeviceLabel}
-            autoSync={autoSync}
-            onAutoSyncChange={setAutoSync}
-            cloudDocs={cloudDocs}
-            isLoading={isCloudLoading}
-            onRefreshCloud={fetchCloudDocs}
-            onDecryptAndDownload={handleDecryptAndDownloadCloud}
-            onDeleteCloudDoc={handleDeleteCloudDoc}
-            onClearRoom={handleClearRoom}
-            passphrase={passphrase}
-          />
-        )}
-
-        {/* Security & Key View */}
-        {activeTab === 'security' && (
-          <SecurityView
-            passphrase={passphrase}
-            onPassphraseChange={setPassphrase}
           />
         )}
       </main>
@@ -815,9 +551,9 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-900 transition-colors">
         <div className="mx-auto flex max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-white">DocuConvert</span>
+            <span className="font-bold text-slate-900 dark:text-white">ConvertX</span>
             <span>•</span>
-            <span>Client-Side AES-256-GCM Zero-Knowledge Document System</span>
+            <span>100% Private In-Browser Universal File Converter</span>
           </div>
 
           <div className="flex items-center gap-4">

@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
@@ -23,70 +22,16 @@ function getAiClient(): GoogleGenAI | null {
   return aiClient;
 }
 
-app.use(express.json({ limit: '60mb' }));
-app.use(express.urlencoded({ extended: true, limit: '60mb' }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
-interface SyncedDocument {
-  id: string;
-  name: string;
-  originalName: string;
-  format: string;
-  originalFormat: string;
-  size: number;
-  encrypted: boolean;
-  encryptedPayload?: string; // Base64 ciphertext
-  iv?: string; // Base64 IV
-  salt?: string; // Base64 Salt
-  checksum?: string; // SHA-256
-  createdAt: number;
-  deviceLabel: string;
-}
-
-interface SyncRoom {
-  roomCode: string;
-  createdAt: number;
-  updatedAt: number;
-  documents: SyncedDocument[];
-}
-
-// In-memory sync rooms cache with disk fallback
-const syncRooms = new Map<string, SyncRoom>();
-const DATA_DIR = path.join(process.cwd(), '.data');
-const SYNC_FILE = path.join(DATA_DIR, 'cloud_sync.json');
-
-function loadSyncData() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (fs.existsSync(SYNC_FILE)) {
-      const raw = fs.readFileSync(SYNC_FILE, 'utf-8');
-      const data: Record<string, SyncRoom> = JSON.parse(raw);
-      for (const [key, room] of Object.entries(data)) {
-        syncRooms.set(key, room);
-      }
-    }
-  } catch (err) {
-    console.error('Failed to load sync data:', err);
-  }
-}
-
-function saveSyncData() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    const data: Record<string, SyncRoom> = {};
-    syncRooms.forEach((room, key) => {
-      data[key] = room;
-    });
-    fs.writeFileSync(SYNC_FILE, JSON.stringify(data), 'utf-8');
-  } catch (err) {
-    console.error('Failed to save sync data:', err);
-  }
-}
-
-loadSyncData();
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // API Routes
 app.get('/api/health', (req, res) => {
@@ -94,7 +39,6 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     version: '1.0.0',
     ocrSupported: true,
-    roomsActive: syncRooms.size,
     timestamp: Date.now(),
   });
 });
@@ -184,140 +128,6 @@ Rules:
   }
 });
 
-// Cloud Sync Room retrieval
-app.get('/api/sync/:roomCode', (req, res) => {
-  const roomCode = String(req.params.roomCode || '')
-    .replace(/[^A-Za-z0-9_-]/g, '')
-    .toUpperCase()
-    .trim()
-    .slice(0, 32);
-
-  if (!roomCode) {
-    return res.status(400).json({ error: 'Invalid room code format' });
-  }
-
-  const room = syncRooms.get(roomCode);
-  if (!room) {
-    return res.json({
-      roomCode,
-      exists: false,
-      documents: [],
-      message: 'Room is empty or newly created.',
-    });
-  }
-  res.json({
-    roomCode,
-    exists: true,
-    createdAt: room.createdAt,
-    updatedAt: room.updatedAt,
-    documents: room.documents,
-  });
-});
-
-// Cloud Sync Document Upload / Push
-app.post('/api/sync/:roomCode', (req, res) => {
-  const roomCode = String(req.params.roomCode || '')
-    .replace(/[^A-Za-z0-9_-]/g, '')
-    .toUpperCase()
-    .trim()
-    .slice(0, 32);
-
-  if (!roomCode) {
-    return res.status(400).json({ error: 'Invalid room code format' });
-  }
-
-  const doc: SyncedDocument = req.body;
-
-  if (!doc || typeof doc !== 'object' || !doc.name || !doc.id) {
-    return res.status(400).json({ error: 'Invalid document payload' });
-  }
-
-  // Sanitize document fields
-  doc.id = String(doc.id).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
-  doc.name = String(doc.name).replace(/[/\\?%*:|"<>]/g, '').slice(0, 150);
-  doc.originalName = String(doc.originalName || doc.name).replace(/[/\\?%*:|"<>]/g, '').slice(0, 150);
-  doc.format = String(doc.format || 'pdf').replace(/[^a-z0-9]/gi, '').slice(0, 10);
-  doc.size = typeof doc.size === 'number' ? Math.max(0, doc.size) : 0;
-
-  let room = syncRooms.get(roomCode);
-  if (!room) {
-    room = {
-      roomCode,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      documents: [],
-    };
-    syncRooms.set(roomCode, room);
-  }
-
-  // Replace if exists or prepend
-  const existingIdx = room.documents.findIndex((d) => d.id === doc.id);
-  if (existingIdx >= 0) {
-    room.documents[existingIdx] = doc;
-  } else {
-    room.documents.unshift(doc);
-  }
-
-  // Cap per room to avoid memory exhaustion (50 docs)
-  if (room.documents.length > 50) {
-    room.documents = room.documents.slice(0, 50);
-  }
-
-  room.updatedAt = Date.now();
-  saveSyncData();
-
-  res.json({
-    success: true,
-    roomCode,
-    count: room.documents.length,
-    document: doc,
-  });
-});
-
-// Delete document from sync room
-app.delete('/api/sync/:roomCode/:docId', (req, res) => {
-  const roomCode = String(req.params.roomCode || '')
-    .replace(/[^A-Za-z0-9_-]/g, '')
-    .toUpperCase()
-    .trim()
-    .slice(0, 32);
-
-  const docId = String(req.params.docId || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
-
-  if (!roomCode || !docId) {
-    return res.status(400).json({ error: 'Invalid room or document identifier' });
-  }
-
-  const room = syncRooms.get(roomCode);
-  if (!room) {
-    return res.status(404).json({ error: 'Room not found' });
-  }
-  room.documents = room.documents.filter((d) => d.id !== docId);
-  room.updatedAt = Date.now();
-  saveSyncData();
-  res.json({ success: true, count: room.documents.length });
-});
-
-// Clear all documents in sync room
-app.post('/api/sync/:roomCode/clear', (req, res) => {
-  const roomCode = String(req.params.roomCode || '')
-    .replace(/[^A-Za-z0-9_-]/g, '')
-    .toUpperCase()
-    .trim()
-    .slice(0, 32);
-
-  if (!roomCode) {
-    return res.status(400).json({ error: 'Invalid room code format' });
-  }
-
-  const room = syncRooms.get(roomCode);
-  if (room) {
-    room.documents = [];
-    room.updatedAt = Date.now();
-    saveSyncData();
-  }
-  res.json({ success: true, count: 0 });
-});
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
