@@ -193,15 +193,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
       </div>
 
-      {/* Privacy Notice */}
-      <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/70 bg-emerald-50/60 px-4 py-3 dark:border-emerald-900/60 dark:bg-emerald-950/30">
-        <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-        <p className="text-xs text-emerald-800 dark:text-emerald-300">
-          <strong>100% Private</strong> — Your conversion history is stored only in your browser's local storage (IndexedDB).
-          It never leaves your device, is never sent to any server, and is automatically removed when you clear your browser data.
-          Each device has its own independent history.
-        </p>
-      </div>
+
 
       {/* History Records List */}
       {filteredRecords.length === 0 ? (
