@@ -4,7 +4,7 @@
 
 ![ConvertX Logo](public/icon.svg)
 
-### Universal High-Fidelity Document Converter, File Comparator & ZIP Archiver
+### Universal High-Fidelity Document Converter, File Compressor & ZIP Archiver
 
 [![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -17,7 +17,7 @@
 
 ---
 
-**ConvertX** is a modern, privacy-first web application designed for non-technical users and professionals alike. Convert, compare, and compress files effortlessly without uploading your documents to third-party servers. Everything runs with high fidelity directly inside your browser.
+**ConvertX** is a modern, privacy-first web application designed for non-technical users and professionals alike. Convert, compress, and archive files effortlessly without uploading your documents to third-party servers. Everything runs with high fidelity directly inside your browser.
 
 ---
 
@@ -41,10 +41,14 @@
   - File size reduction tracking (e.g. `-98% smaller` with WebP encoding).
 - **Batch Image Compression**: Convert entire photo collections and save all in a single compressed ZIP file.
 
-### 3. 🔍 Side-by-Side File Comparison
-- Compare two versions of any file (DOCX, PDF, TXT, CSV, MD, Code, etc.) side by side.
-- Visual line-by-line diff highlighting additions, deletions, and unchanged text.
-- Comprehensive statistics: Word count, character count, total line differences, and similarity percentage score.
+### 3. 🗜️ Dedicated File & Document Compressor
+- **Multi-Format In-Browser Compression**: Drastically reduce the file size of images, PDFs, Word docs (`.docx`), Excel sheets (`.xlsx`), PowerPoint decks (`.pptx`), and text files directly in the browser.
+- **Three Clear Presets for Non-Tech Users**:
+  - **Light (-25%)**: Retains maximum quality; great for minor storage optimization.
+  - **Balanced (Optimal ~50–70%)**: The sweet spot for sharing over Slack, Teams, or WhatsApp with crisp visual fidelity.
+  - **Extreme (-85%)**: Maximizes compression for strict portal uploads and email attachment limits (e.g. under 2MB).
+- **Savings Tracker**: Visual badges show exact bytes saved and reduction percentage (e.g., `-76% smaller`).
+- **Batch Download**: Compress multiple files at once and download them individually or bundled into a single ZIP.
 
 ### 4. 📦 Instant ZIP Archiver & Directory Compressor
 - Compress multiple files or **entire directory folders** (`webkitdirectory`) with hierarchical folder preservation.

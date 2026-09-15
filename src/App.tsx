@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import {
   ShieldCheck,
   Sparkles,
-  Columns2,
+  Minimize2,
 } from 'lucide-react';
 import {
   ConversionItem,
@@ -16,7 +16,7 @@ import { BatchUploader } from './components/BatchUploader';
 import { ConversionCard } from './components/ConversionCard';
 import { ImageConverterView } from './components/ImageConverterView';
 import { HistoryView } from './components/HistoryView';
-import { FileCompareView } from './components/FileCompareView';
+import { FileCompressView } from './components/FileCompressView';
 import { ZipCreatorView } from './components/ZipCreatorView';
 import { PreviewModal } from './components/PreviewModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
@@ -494,12 +494,12 @@ export default function App() {
               </div>
 
               <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 text-purple-600 dark:text-purple-400 font-bold text-xs uppercase tracking-wider">
-                  <Columns2 className="h-4 w-4" />
-                  <span>Compare & ZIP Archiver</span>
+                <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase tracking-wider">
+                  <Minimize2 className="h-4 w-4" />
+                  <span>File Compression & ZIP</span>
                 </div>
                 <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Compare two documents side-by-side with similarity scoring, or package files and entire folders into a single ZIP archive.
+                  Reduce image, PDF, and office file sizes by up to 85% directly in your browser, or package files and folders into ZIP archives.
                 </p>
               </div>
             </div>
@@ -514,8 +514,13 @@ export default function App() {
           />
         )}
 
-        {/* Compare Files View */}
-        {activeTab === 'compare' && <FileCompareView />}
+        {/* Compress Files View */}
+        {activeTab === 'compress' && (
+          <FileCompressView
+            onAddToHistory={(rec) => setHistory((prev) => [rec, ...prev])}
+            addToast={addToast}
+          />
+        )}
 
         {/* Zip Creator View */}
         {activeTab === 'zip' && <ZipCreatorView />}

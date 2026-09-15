@@ -5,13 +5,13 @@ import {
   Sun,
   Smartphone,
   ArrowRightLeft,
-  Columns2,
+  Minimize2,
   Archive,
   FileText,
   Image as ImageIcon,
 } from 'lucide-react';
 
-export type NavTab = 'documents' | 'images' | 'compare' | 'zip' | 'history';
+export type NavTab = 'documents' | 'images' | 'compress' | 'zip' | 'history';
 
 interface NavbarProps {
   activeTab: NavTab;
@@ -86,16 +86,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
-            id="nav-compare-btn"
-            onClick={() => setActiveTab('compare')}
+            id="nav-compress-btn"
+            onClick={() => setActiveTab('compress')}
             className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-150 ${
-              activeTab === 'compare'
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-900 dark:text-blue-400'
+              activeTab === 'compress'
+                ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-900 dark:text-indigo-400'
                 : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
             }`}
           >
-            <Columns2 className="h-4 w-4 text-indigo-500" />
-            <span>Compare Files</span>
+            <Minimize2 className="h-4 w-4 text-indigo-500" />
+            <span>Compress Files</span>
           </button>
 
           <button
@@ -188,15 +188,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('compare')}
+          onClick={() => setActiveTab('compress')}
           className={`flex flex-col items-center gap-0.5 rounded-xl px-2 py-1 text-[11px] font-bold transition ${
-            activeTab === 'compare'
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/40'
+            activeTab === 'compress'
+              ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/40'
               : 'text-slate-500 dark:text-slate-400'
           }`}
         >
-          <Columns2 className="h-4 w-4" />
-          <span>Compare</span>
+          <Minimize2 className="h-4 w-4" />
+          <span>Compress</span>
         </button>
 
         <button

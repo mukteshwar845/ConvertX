@@ -8,7 +8,7 @@ import {
   ChevronUp,
   FileText,
   Image as ImageIcon,
-  Columns2,
+  Minimize2,
   Archive,
   History,
   Lock,
@@ -125,11 +125,11 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onNavigateTab('compare')}
+                  onClick={() => onNavigateTab('compress')}
                   className="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition"
                 >
-                  <Columns2 className="h-3.5 w-3.5" />
-                  <span>Side-by-Side Compare</span>
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  <span>Compress Files</span>
                 </button>
               </li>
               <li>
