@@ -182,12 +182,10 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
                 <option value="pdf">PDF Document (.pdf)</option>
                 <option value="docx">Word Document (.docx)</option>
                 <option value="pptx">PowerPoint Presentation (.pptx)</option>
-                <option value="png">PNG Image (.png)</option>
-                <option value="jpg">JPEG Image (.jpg)</option>
                 <option value="txt">Plain Text (.txt)</option>
                 <option value="html">Web Page (.html)</option>
                 <option value="md">Markdown (.md)</option>
-                <option value="csv">Table (.csv)</option>
+                <option value="csv">Table / CSV (.csv)</option>
               </select>
             </div>
 

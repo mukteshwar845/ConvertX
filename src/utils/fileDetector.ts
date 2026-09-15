@@ -514,7 +514,9 @@ export function getCompatibleTargets(source: SupportedFormat, ocrEnabled: boolea
       return ['pdf', 'pptx', 'txt', 'html', 'md', 'docx'];
 
     case 'pdf':
-      return ['docx', 'pptx', 'xlsx', 'txt', 'html', 'md', 'png', 'jpg'];
+      // NOTE: PNG/JPG removed — browser-side PDF rendering requires PDF.js (not installed).
+      // Real PDF-to-image would produce a proper page render, not a fake canvas fallback.
+      return ['docx', 'pptx', 'xlsx', 'txt', 'html', 'md'];
 
     case 'pptx':
     case 'ppt':

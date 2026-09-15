@@ -446,85 +446,14 @@ export async function universalConvertDocument(
         };
       }
 
-      if (targetFormat === 'png' || targetFormat === 'jpg') {
-        onProgress?.(65, `Rendering PDF page to ${targetFormat.toUpperCase()} raster...`);
-        let imageBlob: Blob | null = null;
-        const bytes = new Uint8Array(arrayBuffer);
-
-        // Check for embedded JPEG streams
-        for (let i = 0; i < bytes.length - 4; i++) {
-          if (bytes[i] === 0xff && bytes[i + 1] === 0xd8 && bytes[i + 2] === 0xff) {
-            for (let j = i + 3; j < bytes.length - 1; j++) {
-              if (bytes[j] === 0xff && bytes[j + 1] === 0xd9) {
-                const jpgBytes = bytes.subarray(i, j + 2);
-                if (jpgBytes.length > 500) {
-                  imageBlob = new Blob([jpgBytes], { type: targetFormat === 'png' ? 'image/png' : 'image/jpeg' });
-                  break;
-                }
-              }
-            }
-            if (imageBlob) break;
-          }
-        }
-
-        // Offscreen high-DPI canvas fallback if no raw image stream
-        if (!imageBlob && typeof document !== 'undefined') {
-          const canvas = document.createElement('canvas');
-          const scale = 2;
-          const width = 800 * scale;
-          const height = 1100 * scale;
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.fillStyle = '#0f172a';
-            ctx.font = `bold ${22 * scale}px sans-serif`;
-            ctx.fillText(baseName, 50 * scale, 65 * scale);
-
-            ctx.fillStyle = '#64748b';
-            ctx.font = `${11 * scale}px sans-serif`;
-            ctx.fillText('Converted from PDF vector page', 50 * scale, 88 * scale);
-
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = scale;
-            ctx.beginPath();
-            ctx.moveTo(50 * scale, 102 * scale);
-            ctx.lineTo((800 - 50) * scale, 102 * scale);
-            ctx.stroke();
-
-            ctx.fillStyle = '#334155';
-            ctx.font = `${13 * scale}px sans-serif`;
-            const lines = workingText.split('\n').filter(Boolean);
-            let y = 135 * scale;
-            for (const line of lines.slice(0, 42)) {
-              if (y > height - 40 * scale) break;
-              ctx.fillText(line.slice(0, 85), 50 * scale, y);
-              y += 22 * scale;
-            }
-
-            const mime = targetFormat === 'png' ? 'image/png' : 'image/jpeg';
-            imageBlob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), mime, 0.92));
-          }
-        }
-
-        if (!imageBlob) {
-          imageBlob = new Blob([workingText], { type: targetFormat === 'png' ? 'image/png' : 'image/jpeg' });
-        }
-
-        const previewUrl = typeof URL !== 'undefined' ? URL.createObjectURL(imageBlob) : '';
-        return {
-          blob: imageBlob,
-          name: outName,
-          size: imageBlob.size,
-          ocrUsed,
-          preview: { type: 'image', content: previewUrl },
-          extractedText: workingText,
-          strategyName: 'PDF Page -> High-DPI Image Raster',
-        };
-      }
+      // PDF \u2192 PNG/JPG: requires PDF.js for proper page rendering.
+      // This format pair is intentionally excluded from the target menu.
+      // Throw clearly rather than silently producing a fake/blank image.
+      throw new Error(
+        'PDF to image conversion is not supported in this version. ' +
+        'To convert a PDF to an image, please use the Image Converter tab ' +
+        'or export your PDF as PNG from a PDF viewer first.'
+      );
     }
 
     // Category E: PPTX Source
