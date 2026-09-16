@@ -400,7 +400,18 @@ export default function App() {
     await promptInstall();
   };
 
-  const isInstallable = !isStandalone && (canPromptNativeInstall || isIOS);
+  const handleInstallClick = async () => {
+    if (canPromptNativeInstall) {
+      const outcome = await promptInstall();
+      if (!outcome) {
+        setShowInstallModal(true);
+      }
+    } else {
+      setShowInstallModal(true);
+    }
+  };
+
+  const isInstallable = !isStandalone;
   const completedCount = queue.filter((i) => i.status === 'completed').length;
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -417,7 +428,7 @@ export default function App() {
         setIsDark={setIsDark}
         historyCount={history.length}
         isInstallable={isInstallable}
-        onInstallClick={() => setShowInstallModal(true)}
+        onInstallClick={handleInstallClick}
       />
 
       {/* Main Content — flex-1, has bottom padding on mobile for bottom nav */}
@@ -429,7 +440,7 @@ export default function App() {
             onFilesAdded={handleFilesAdded}
             isDark={isDark}
             isInstallable={isInstallable}
-            onInstallClick={() => setShowInstallModal(true)}
+            onInstallClick={handleInstallClick}
             onSetGlobalTarget={(tgt) => setGlobalTarget(tgt)}
           />
         )}
@@ -605,7 +616,7 @@ export default function App() {
               setActiveTab={(tab) => navigateTo(tab)}
               isInstallable={isInstallable}
               isStandalone={isStandalone}
-              onInstallClick={() => setShowInstallModal(true)}
+              onInstallClick={handleInstallClick}
               onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
             />
           </div>

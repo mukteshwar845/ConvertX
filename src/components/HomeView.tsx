@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { NavTab } from './Navbar';
 import { TargetFormat } from '../types';
+import { InstallButton } from './InstallButton';
 
 export interface HomeViewProps {
   setActiveTab: (tab: NavTab, subTool?: string) => void;
@@ -276,6 +277,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="text-xs text-blue-100 font-medium">Documents · Images · Spreadsheets · PDFs</div>
               </div>
             </button>
+
+            {/* Direct Device Install Action with effects */}
+            {isInstallable && (
+              <div className="mt-5 sm:mt-6 flex justify-center">
+                <InstallButton
+                  variant="hero"
+                  onClick={onInstallClick}
+                />
+              </div>
+            )}
           </div>
 
           {/* Quick Trust Highlights Bar */}

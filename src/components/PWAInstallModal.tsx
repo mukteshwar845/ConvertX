@@ -1,5 +1,6 @@
 import React from 'react';
 import { Share, PlusSquare, X, Download, Smartphone, Laptop, CheckCircle2 } from 'lucide-react';
+import { InstallButton } from './InstallButton';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -99,15 +100,10 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         ) : canNativeInstall ? (
           /* Android / Chrome Native Install */
           <div className="mt-5 space-y-3">
-            <button
-              onClick={() => {
-                onNativeInstall();
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-xs font-bold text-white shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition"
-            >
-              <Download className="h-4 w-4" />
-              <span>Install ConvertX Now</span>
-            </button>
+            <InstallButton
+              variant="modal"
+              onClick={onNativeInstall}
+            />
             <p className="text-center text-[11px] text-slate-400">
               No app store required · Instant direct installation
             </p>

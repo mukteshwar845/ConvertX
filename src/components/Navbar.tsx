@@ -17,6 +17,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { MobileTab } from './BottomNav';
+import { InstallButton } from './InstallButton';
 
 export type NavTab =
   | MobileTab
@@ -259,17 +260,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Settings className="h-4 w-4" />
           </button>
 
-          {/* Install button */}
+          {/* Install button with visual effects */}
           {isInstallable && (
-            <button
-              id="install-pwa-btn"
+            <InstallButton
+              variant="navbar"
               onClick={onInstallClick}
-              className="hidden sm:flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 transition active:scale-95"
-              title="Install app on device"
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-              <span>Install</span>
-            </button>
+            />
           )}
         </div>
       </div>

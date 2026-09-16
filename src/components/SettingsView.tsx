@@ -24,6 +24,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { NavTab } from './Navbar';
+import { InstallButton } from './InstallButton';
 
 interface SettingsViewProps {
   isDark: boolean;
@@ -302,14 +303,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <button
-                type="button"
+              <InstallButton
+                variant="card"
                 onClick={onInstallClick}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs px-4 py-2.5 transition-all shadow-xs hover:shadow-sm flex-shrink-0 cursor-pointer"
-              >
-                <Download className="h-4 w-4" />
-                <span>Install Now</span>
-              </button>
+              />
             </div>
           )}
         </div>
