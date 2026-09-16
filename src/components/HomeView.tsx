@@ -184,15 +184,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
       />
 
       {/* ── 1. HERO SECTION ───────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-100/90 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 text-slate-900 dark:text-white transition-colors duration-200">
         {/* Ambient background glow effects */}
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-[600px] rounded-full bg-gradient-to-tr from-blue-600/20 via-indigo-600/20 to-purple-600/20 blur-[100px]" />
-        <div className="pointer-events-none absolute top-1/2 -left-32 h-64 w-64 rounded-full bg-blue-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute top-1/3 -right-32 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-[600px] rounded-full bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/15 dark:from-blue-600/20 dark:via-indigo-600/20 dark:to-purple-600/20 blur-[100px]" />
+        <div className="pointer-events-none absolute top-1/2 -left-32 h-64 w-64 rounded-full bg-blue-400/10 dark:bg-blue-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute top-1/3 -right-32 h-64 w-64 rounded-full bg-indigo-400/10 dark:bg-indigo-500/15 blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl text-center">
           {/* Trust Pill Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400 backdrop-blur-md shadow-sm mb-6 sm:mb-8 transition-transform hover:scale-105">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 px-4 py-1.5 text-xs font-semibold backdrop-blur-md shadow-xs mb-6 sm:mb-8 transition-transform hover:scale-105">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -201,15 +201,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight sm:leading-none">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight sm:leading-none">
             Universal File Converter
-            <span className="block mt-2 sm:mt-3 bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+            <span className="block mt-2 sm:mt-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent">
               Fast, Powerful & Private.
             </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
+          <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
             Convert documents, spreadsheets, presentations, and images directly in your browser.
             No queues, no account required, and your files never leave your device.
           </p>
@@ -225,8 +225,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
               onClick={triggerGeneralBrowse}
               className={`hidden sm:flex group relative cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 sm:p-10 text-center transition-all duration-200 ${
                 isDragging
-                  ? 'border-blue-400 bg-blue-500/15 scale-[1.01] shadow-2xl shadow-blue-500/20'
-                  : 'border-slate-700/80 bg-slate-900/80 hover:border-blue-400 hover:bg-slate-900/95 backdrop-blur-xl shadow-xl'
+                  ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-500/15 scale-[1.01] shadow-2xl shadow-blue-500/20'
+                  : 'border-slate-200/90 bg-white/95 hover:border-blue-400 hover:bg-blue-50/30 dark:border-slate-700/80 dark:bg-slate-900/80 dark:hover:border-blue-400 dark:hover:bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-slate-200/50 dark:shadow-none'
               }`}
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110">
@@ -237,10 +237,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md shadow-blue-600/30 group-hover:bg-blue-500 transition">
                   Choose Files to Convert
                 </span>
-                <span className="text-sm font-medium text-slate-400">or drag & drop here</span>
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">or drag & drop here</span>
               </div>
 
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 Supports DOCX, PDF, PPTX, XLSX, PNG, JPG, WEBP, TXT, CSV, MD & more
               </p>
 
@@ -249,7 +249,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {['PDF', 'DOCX', 'XLSX', 'PPTX', 'PNG', 'JPG', 'WEBP', 'ZIP'].map((ext) => (
                   <span
                     key={ext}
-                    className="rounded-lg bg-slate-800/90 border border-slate-700/80 px-2 py-0.5 text-[10px] font-bold text-slate-300"
+                    className="rounded-lg bg-slate-100 border border-slate-200/80 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800/90 dark:border-slate-700/80 dark:text-slate-300"
                   >
                     {ext}
                   </span>
@@ -279,21 +279,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           {/* Quick Trust Highlights Bar */}
-          <div className="mt-8 sm:mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-slate-400">
+          <div className="mt-8 sm:mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
-              <Lock className="h-4 w-4 text-emerald-400" />
+              <Lock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span>100% In-Browser Privacy</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-amber-400" />
+              <Zap className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               <span>Zero Waiting Queues</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-blue-400" />
+              <Layers className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <span>25+ Document Formats</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-purple-400" />
+              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               <span>High-Fidelity Output</span>
             </div>
           </div>
