@@ -25,53 +25,58 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="hidden md:block border-t border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 transition-colors duration-200">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">
+    <footer className="hidden md:block mt-auto border-t border-slate-200/70 bg-slate-50/70 dark:border-slate-800/70 dark:bg-slate-950/70 backdrop-blur-md transition-colors duration-200">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand & Mission */}
-          <div className="md:col-span-2 lg:col-span-2 space-y-4">
+          <div className="md:col-span-2 space-y-2.5">
             <div
               onClick={() => {
-                onNavigateTab('documents');
+                onNavigateTab('convert');
                 scrollToTop();
               }}
-              className="inline-flex cursor-pointer items-center gap-2.5 transition-transform hover:scale-[1.01]"
+              className="inline-flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-85"
             >
               <img
                 src="/icon.svg"
                 alt="ConvertX Logo"
-                className="h-8 w-8 rounded-xl shadow-md shadow-blue-500/20 object-contain transition-transform hover:scale-105"
+                className="h-6 w-6 rounded-lg shadow-sm shadow-blue-500/20 object-contain"
               />
-              <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+              <span className="text-base font-black tracking-tight text-slate-900 dark:text-white">
                 Convert<span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">X</span>
               </span>
             </div>
 
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm">
-              Universal, high-fidelity file conversion and compression built for speed and simplicity. Fast, intuitive, and 100% private directly in your browser.
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
+              Universal, high-fidelity file conversion and compression built for speed and simplicity. 100% private directly in your browser.
             </p>
 
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-50/70 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>100% Private • Zero Server Uploads</span>
+            <div className="pt-1">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span>100% Private · Zero Server Uploads</span>
+              </div>
             </div>
           </div>
 
           {/* Navigation Tools */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
               Tools
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm">
+            <ul className="space-y-1.5 text-xs">
               <li>
                 <button
                   onClick={() => {
-                    onNavigateTab('documents');
+                    onNavigateTab('convert');
                     scrollToTop();
                   }}
-                  className="flex items-center gap-2 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
                 >
-                  <FileText className="h-3.5 w-3.5 text-blue-500" />
+                  <FileText className="h-3 w-3 text-blue-500 shrink-0" />
                   <span>Document Converter</span>
                 </button>
               </li>
@@ -81,9 +86,9 @@ export const Footer: React.FC<FooterProps> = ({
                     onNavigateTab('images');
                     scrollToTop();
                   }}
-                  className="flex items-center gap-2 text-slate-600 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 transition"
                 >
-                  <ImageIcon className="h-3.5 w-3.5 text-purple-500" />
+                  <ImageIcon className="h-3 w-3 text-purple-500 shrink-0" />
                   <span>Image Converter</span>
                 </button>
               </li>
@@ -93,9 +98,9 @@ export const Footer: React.FC<FooterProps> = ({
                     onNavigateTab('compress');
                     scrollToTop();
                   }}
-                  className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition"
                 >
-                  <Minimize2 className="h-3.5 w-3.5 text-indigo-500" />
+                  <Minimize2 className="h-3 w-3 text-indigo-500 shrink-0" />
                   <span>Compress Files</span>
                 </button>
               </li>
@@ -105,9 +110,9 @@ export const Footer: React.FC<FooterProps> = ({
                     onNavigateTab('zip');
                     scrollToTop();
                   }}
-                  className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition"
                 >
-                  <Archive className="h-3.5 w-3.5 text-emerald-500" />
+                  <Archive className="h-3 w-3 text-emerald-500 shrink-0" />
                   <span>ZIP Archiver</span>
                 </button>
               </li>
@@ -117,9 +122,9 @@ export const Footer: React.FC<FooterProps> = ({
                     onNavigateTab('history');
                     scrollToTop();
                   }}
-                  className="flex items-center gap-2 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
                 >
-                  <History className="h-3.5 w-3.5 text-slate-400" />
+                  <History className="h-3 w-3 text-slate-400 shrink-0" />
                   <span>Conversion History</span>
                 </button>
               </li>
@@ -128,10 +133,10 @@ export const Footer: React.FC<FooterProps> = ({
 
           {/* Capabilities */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
               Features
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
               <li>PDF & Word Formatting</li>
               <li>Batch Conversion & Export</li>
               <li>Image Quality Optimization</li>
@@ -142,37 +147,37 @@ export const Footer: React.FC<FooterProps> = ({
 
           {/* Trust & Privacy */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3.5">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
               Trust & Security
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm">
+            <ul className="space-y-1.5 text-xs">
               <li>
                 <button
                   onClick={onOpenPrivacyModal}
-                  className="flex items-center gap-2 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition"
+                  className="flex items-center gap-1.5 font-medium text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition"
                 >
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                   <span>Privacy Policy</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={onOpenPrivacyModal}
-                  className="flex items-center gap-2 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
                 >
-                  <Lock className="h-3.5 w-3.5 text-purple-500" />
+                  <Lock className="h-3 w-3 text-purple-500 shrink-0" />
                   <span>Terms of Service</span>
                 </button>
               </li>
               <li>
-                <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                   <span>100% In-Browser</span>
                 </span>
               </li>
               <li>
-                <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                   <span>Zero Data Storage</span>
                 </span>
               </li>
@@ -181,30 +186,30 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Bottom Bar: Copyright & Back to Top */}
-        <div className="mt-10 pt-6 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
-          <p>© 2026 ConvertX. All rights reserved.</p>
+        <div className="mt-6 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+          <p>© 2026 ConvertX. All rights reserved. 100% Client-Side Processing.</p>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             <button
               onClick={onOpenPrivacyModal}
-              className="hover:text-slate-900 dark:hover:text-white transition"
+              className="hover:text-slate-700 dark:hover:text-slate-300 transition"
             >
               Privacy Policy
             </button>
             <span>•</span>
             <button
               onClick={onOpenPrivacyModal}
-              className="hover:text-slate-900 dark:hover:text-white transition"
+              className="hover:text-slate-700 dark:hover:text-slate-300 transition"
             >
               Terms of Service
             </button>
             <span>•</span>
             <button
               onClick={scrollToTop}
-              className="inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 transition"
+              className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
             >
               <span>Back to top</span>
-              <ChevronUp className="h-3.5 w-3.5" />
+              <ChevronUp className="h-3 w-3" />
             </button>
           </div>
         </div>

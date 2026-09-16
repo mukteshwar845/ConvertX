@@ -169,7 +169,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-16">
+    <div className="flex flex-col min-h-full pb-6 sm:pb-8">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
