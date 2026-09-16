@@ -26,6 +26,7 @@ import {
   performOcrExtraction,
   ConversionProgressCallback,
 } from './conversionEngine';
+import { parseHtmlToSections, renderSectionsToPptx } from './docxToPptxConverter';
 
 // Global SHA-256 in-memory cache for instant replay
 const conversionCache = new Map<string, ConversionResult>();
@@ -234,62 +235,25 @@ export async function universalConvertDocument(
       }
 
       if (targetFormat === 'pptx') {
-        onProgress?.(65, 'Mapping document hierarchy to presentation slides...');
-        const mode = presentationMode;
+        onProgress?.(60, 'Building intelligent slide layout from document structure...');
+        // Full-fidelity engine: handles 50+ page docs, auto-splits long sections,
+        // preserves all paragraphs, lists, tables, headings across unlimited slides
+        const sections = parseHtmlToSections(parsed.html, baseName);
 
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(`<div>${parsed.html}</div>`, 'text/html');
-        const elements = Array.from(dom.body.firstElementChild?.children || []);
+        onProgress?.(70, `Generating ${sections.length} slides from ${file.name}...`);
+        const blob = await renderSectionsToPptx(
+          baseName,
+          sections,
+          (pct, msg) => onProgress?.(70 + Math.round(pct * 0.2), msg)
+        );
 
-        const sections: Array<{ title: string; bullets: string[] }> = [];
-        let currentSection: { title: string; bullets: string[] } | null = null;
-
-        for (const el of elements) {
-          const tag = el.tagName.toLowerCase();
-          const text = el.textContent?.trim() || '';
-          if (!text) continue;
-
-          if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
-            if (currentSection) sections.push(currentSection);
-            currentSection = { title: text, bullets: [] };
-          } else if (tag === 'ul' || tag === 'ol') {
-            const lis = Array.from(el.querySelectorAll('li'));
-            for (const li of lis) {
-              const liText = li.textContent?.trim();
-              if (liText) {
-                if (!currentSection) currentSection = { title: 'Overview', bullets: [] };
-                currentSection.bullets.push(liText);
-              }
-            }
-          } else {
-            if (!currentSection) currentSection = { title: 'Overview', bullets: [] };
-            if (mode === 'exact') {
-              // Exact mode: strictly preserve full sentence text
-              currentSection.bullets.push(text);
-            } else if (mode === 'page-to-slide') {
-              // Page to slide: chunk by ~250 words
-              if (currentSection.bullets.join(' ').split(/\s+/).length > 250) {
-                sections.push(currentSection);
-                currentSection = { title: `Page Slide ${sections.length + 1}`, bullets: [text] };
-              } else {
-                currentSection.bullets.push(text);
-              }
-            } else {
-              // Smart layout
-              currentSection.bullets.push(text);
-            }
-          }
-        }
-        if (currentSection) sections.push(currentSection);
-
-        const blob = await renderContentToPptx(file.name, sections);
         return {
           blob,
           name: outName,
           size: blob.size,
           preview: { type: 'html', content: parsed.html },
           extractedText: parsed.text,
-          strategyName: `OpenXML DOCX -> PPTX (${mode.toUpperCase()} Mode)`,
+          strategyName: `Full-Fidelity DOCX \u2192 PPTX (${sections.length} slides)`,
         };
       }
 
