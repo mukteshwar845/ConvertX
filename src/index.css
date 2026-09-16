@@ -29,10 +29,21 @@
     overflow-x: hidden;
   }
 
-  /* Minimum touch target — 44×44px per Apple HIG */
-  button, [role="button"], a, input[type="checkbox"], input[type="radio"] {
-    min-height: 44px;
-    min-width: 44px;
+  /* Minimum touch target for touch screens — Apple HIG 44px on coarse pointers only */
+  @media (pointer: coarse) {
+    button:not(.touch-auto):not(.inline-btn),
+    [role="button"]:not(.touch-auto):not(.inline-btn),
+    a:not(.touch-auto):not(.inline-btn) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Override for compact buttons, inline links, and footer navigation */
+  .touch-auto,
+  .inline-btn {
+    min-height: 0 !important;
+    min-width: 0 !important;
   }
 
   /* Override for icon-only tight buttons */
