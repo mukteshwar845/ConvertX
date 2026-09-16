@@ -136,8 +136,8 @@ export default function App() {
   // Navigate to a tab, with optional sub-tool for Convert tab
   const navigateTo = (tab: NavTab, subTool?: string) => {
     setActiveTab(tab);
-    if (tab === 'convert' && subTool) {
-      setConvertSubTool(subTool as ConvertSubTool);
+    if (tab === 'convert') {
+      setConvertSubTool((subTool as ConvertSubTool) || 'documents');
     }
   };
 
@@ -429,8 +429,8 @@ export default function App() {
         {/* ── CONVERT (documents + compress + zip sub-tools) ─────────── */}
         {activeTab === 'convert' && (
           <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-            {/* Sub-tool switcher */}
-            <div className="flex gap-1 mb-5 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200/60 dark:border-slate-700/60">
+            {/* Sub-tool switcher — mobile only (desktop uses top navbar) */}
+            <div className="md:hidden flex gap-1 mb-5 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200/60 dark:border-slate-700/60">
               {([
                 { id: 'documents', label: '📄 Documents' },
                 { id: 'compress', label: '📦 Compress' },

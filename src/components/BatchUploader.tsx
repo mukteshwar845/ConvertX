@@ -65,8 +65,8 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Visual Step Guide for Non-Tech Users */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Visual Step Guide for Non-Tech Users (Desktop / Tablet) */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-3">
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 font-bold text-sm">
             1
@@ -98,12 +98,22 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile-first primary file picker button */}
+      {/* Hidden file input shared between mobile button and desktop drop zone */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".docx,.doc,.pdf,.pptx,.ppt,.odp,.xlsx,.xls,.csv,.ods,.png,.jpg,.jpeg,.webp,.svg,.bmp,.gif,.tiff,.txt,.rtf,.odt,.html,.htm,.md,.json,.xml"
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+
+      {/* Mobile-first primary file picker button — only shown on mobile screens */}
       <button
         id="choose-files-btn"
         onClick={() => fileInputRef.current?.click()}
         className="
-          w-full flex items-center justify-center gap-3
+          sm:hidden w-full flex items-center justify-center gap-3
           rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700
           bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30
           px-6 py-5 min-h-[72px]
@@ -135,14 +145,6 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
             : 'border-slate-300/90 bg-white/80 hover:border-blue-400 hover:bg-blue-50/20 dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:border-blue-500/60 dark:hover:bg-slate-800/40 shadow-xs'
         }`}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".docx,.doc,.pdf,.pptx,.ppt,.odp,.xlsx,.xls,.csv,.ods,.png,.jpg,.jpeg,.webp,.svg,.bmp,.gif,.tiff,.txt,.rtf,.odt,.html,.htm,.md,.json,.xml"
-          onChange={handleFileInputChange}
-          className="hidden"
-        />
 
         <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-110">
           <UploadCloud className="h-8 w-8" />
