@@ -23,6 +23,9 @@ import { ToastContainer, ToastMessage } from './components/Toast';
 import { HomeView } from './components/HomeView';
 import { SettingsView } from './components/SettingsView';
 import { OfflineBanner } from './components/OfflineBanner';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
+import { usePWAInstall } from './hooks/usePWAInstall';
+import { registerSW } from './registerServiceWorker';
 import {
   detectFormat,
   convertDocument,
@@ -65,10 +68,17 @@ export default function App() {
   // Modals
   const [previewItem, setPreviewItem] = useState<ConversionItem | HistoryRecord | null>(null);
   const [previewMode, setPreviewMode] = useState<'preview' | 'compare' | 'fidelity'>('preview');
-  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isIOS, setIsIOS] = useState<boolean>(false);
+  // PWA Install state and standalone detection
+  const {
+    isStandalone,
+    canPromptNativeInstall,
+    isIOS,
+    showModal: showInstallModal,
+    setShowModal: setShowInstallModal,
+    promptInstall,
+  } = usePWAInstall();
+
   const [isConvertingBatch, setIsConvertingBatch] = useState<boolean>(false);
 
   // In-app non-blocking Toast Notifications
@@ -117,20 +127,17 @@ export default function App() {
       .catch(() => setHistoryLoaded(true));
   }, []);
 
-  // PWA beforeinstallprompt handler
+  // Register Service Worker & handle PWA shortcuts on mount
   useEffect(() => {
-    const isIOSDevice = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-    setIsIOS(isIOSDevice);
+    registerSW();
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as NavTab | null;
+      if (tabParam && ['home', 'convert', 'images', 'compress', 'zip', 'history', 'settings'].includes(tabParam)) {
+        navigateTo(tabParam);
+      }
+    }
   }, []);
 
   // Navigate to a tab, with optional sub-tool for Convert tab
@@ -387,13 +394,10 @@ export default function App() {
   };
 
   const handleNativeInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === 'accepted') setDeferredPrompt(null);
+    await promptInstall();
   };
 
-  const isInstallable = !!deferredPrompt || isIOS;
+  const isInstallable = !isStandalone && (canPromptNativeInstall || isIOS);
   const completedCount = queue.filter((i) => i.status === 'completed').length;
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -596,6 +600,7 @@ export default function App() {
             onOpenPrivacyModal={() => setShowPrivacyModal(true)}
             setActiveTab={(tab) => navigateTo(tab)}
             isInstallable={isInstallable}
+            isStandalone={isStandalone}
             onInstallClick={() => setShowInstallModal(true)}
             onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
           />
@@ -659,8 +664,11 @@ export default function App() {
         onClose={() => setShowInstallModal(false)}
         isIOS={isIOS}
         onNativeInstall={handleNativeInstall}
-        canNativeInstall={!!deferredPrompt}
+        canNativeInstall={canPromptNativeInstall}
+        isStandalone={isStandalone}
       />
+
+      <PWAUpdateNotification />
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 

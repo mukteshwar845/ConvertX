@@ -2,19 +2,153 @@
   "id": "/",
   "name": "ConvertX - Universal Document & File Converter",
   "short_name": "ConvertX",
-  "description": "Fast, high-fidelity universal file converter, compressor, and archiver running 100% privately in your browser.",
-  "start_url": "/",
+  "description": "Fast, intelligent file conversion with high-fidelity formatting preservation. 100% private in-browser.",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Convert Documents",
+      "short_name": "Convert",
+      "description": "Convert Word, PDF, Excel, PowerPoint & Text files",
+      "url": "/?tab=convert",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Image Studio",
+      "short_name": "Images",
+      "description": "Convert, optimize & resize WebP, PNG, JPG, SVG",
+      "url": "/?tab=images",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "File Compressor",
+      "short_name": "Compress",
+      "description": "Reduce file sizes up to 85% with client-side compression",
+      "url": "/?tab=compress",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "ZIP Archiver",
+      "short_name": "ZIP",
+      "description": "Package multiple files & folders into compressed ZIP archives",
+      "url": "/?tab=zip",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Conversion History",
+      "short_name": "History",
+      "description": "View private local conversion history & downloads",
+      "url": "/?tab=history",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/?share=true",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "*/*",
+            ".docx",
+            ".doc",
+            ".pdf",
+            ".pptx",
+            ".xlsx",
+            ".csv",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp",
+            ".svg",
+            ".txt",
+            ".md",
+            ".json"
+          ]
+        }
+      ]
+    }
+  }
 }

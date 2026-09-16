@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Moon, Sun, Shield, Trash2, Info, ChevronRight,
   Palette, Clock, HardDrive, Zap, Download, Archive, Minimize2,
+  CheckCircle2, Smartphone,
 } from 'lucide-react';
 import { MobileTab } from './BottomNav';
 
@@ -13,12 +14,13 @@ interface SettingsViewProps {
   onOpenPrivacyModal: () => void;
   setActiveTab: (tab: MobileTab) => void;
   isInstallable: boolean;
+  isStandalone?: boolean;
   onInstallClick: () => void;
   onNavigateTo: (tab: MobileTab, subTool?: string) => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="mb-2">
+  <div className="mb-3">
     <div className="px-4 pb-1.5">
       <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
         {title}
@@ -98,6 +100,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onClearHistory,
   onOpenPrivacyModal,
   isInstallable,
+  isStandalone = false,
   onInstallClick,
   onNavigateTo,
 }) => {
@@ -117,12 +120,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Header */}
       <div className="px-4 pt-6 pb-5">
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Settings</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Preferences & privacy controls</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Preferences, app installation & privacy</p>
       </div>
 
       {/* Appearance */}
       <Section title="Appearance">
         <ThemeRow isDark={isDark} setIsDark={setIsDark} />
+      </Section>
+
+      {/* App Installation */}
+      <Section title="Application">
+        {isStandalone ? (
+          <Row
+            icon={<CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+            iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+            label="ConvertX App"
+            sublabel="Running as installed standalone application"
+            right={
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                Installed
+              </span>
+            }
+            noBorder
+          />
+        ) : (
+          <Row
+            icon={<Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+            iconBg="bg-blue-50 dark:bg-blue-950/60"
+            label="Install ConvertX"
+            sublabel="Install to desktop or mobile home screen"
+            right={
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                Available
+              </span>
+            }
+            onClick={onInstallClick}
+            noBorder
+          />
+        )}
       </Section>
 
       {/* Tools */}
@@ -145,19 +180,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </Section>
 
       {/* Privacy */}
-      <Section title="Privacy">
+      <Section title="Privacy & Data">
         <Row
           icon={<Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
           iconBg="bg-emerald-50 dark:bg-emerald-950/60"
           label="Privacy Policy"
-          sublabel="How your data is handled"
+          sublabel="100% client-side data isolation"
           onClick={onOpenPrivacyModal}
         />
         <Row
           icon={<Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
           iconBg="bg-blue-50 dark:bg-blue-950/60"
           label="Conversion History"
-          sublabel={`${historyCount} item${historyCount !== 1 ? 's' : ''} · stored on this device only`}
+          sublabel={`${historyCount} item${historyCount !== 1 ? 's' : ''} · stored in device IndexedDB`}
           onClick={() => onNavigateTo('history')}
         />
         <Row
@@ -176,8 +211,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <Row
           icon={<HardDrive className="h-4 w-4 text-slate-600 dark:text-slate-300" />}
           iconBg="bg-slate-100 dark:bg-slate-800"
-          label="Local Storage"
-          sublabel="History stored in IndexedDB on this device"
+          label="Local IndexedDB Storage"
+          sublabel="Zero server syncing · local device only"
           right={
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
               Private
@@ -187,36 +222,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         />
       </Section>
 
-      {/* Install */}
-      {isInstallable && (
-        <Section title="App">
-          <Row
-            icon={<Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
-            iconBg="bg-blue-50 dark:bg-blue-950/60"
-            label="Install ConvertX"
-            sublabel="Add to home screen for instant access"
-            onClick={onInstallClick}
-            noBorder
-          />
-        </Section>
-      )}
-
       {/* About */}
       <Section title="About">
         <Row
           icon={<Zap className="h-4 w-4 text-violet-600 dark:text-violet-400" />}
           iconBg="bg-violet-50 dark:bg-violet-950/60"
           label="ConvertX"
-          sublabel="100% private · client-side conversion"
+          sublabel="Progressive Web Application"
           right={
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">v2.0</span>
+            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">v2.1 PWA</span>
           }
         />
         <Row
           icon={<Info className="h-4 w-4 text-slate-500" />}
           iconBg="bg-slate-100 dark:bg-slate-800"
-          label="Open Source"
-          sublabel="Built with React, PptxGenJS, mammoth, jsPDF"
+          label="Open Source Libraries"
+          sublabel="React, PptxGenJS, Mammoth, jsPDF, JSZip"
           noBorder
         />
       </Section>
@@ -224,8 +245,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Bottom disclaimer */}
       <div className="px-4 py-4 text-center">
         <p className="text-xs text-slate-400 dark:text-slate-600 leading-relaxed">
-          All conversions happen entirely in your browser.{'\n'}
-          No files are ever uploaded to any server.
+          All conversions run directly in your browser sandbox.{'\n'}
+          No document data is ever stored on any external server.
         </p>
       </div>
     </div>
