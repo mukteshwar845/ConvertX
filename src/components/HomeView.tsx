@@ -184,7 +184,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       />
 
       {/* ── 1. HERO SECTION ───────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-100/90 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 text-slate-900 dark:text-white transition-colors duration-200">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-100/90 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 text-slate-900 dark:text-white">
         {/* Ambient background glow effects */}
         <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-[600px] rounded-full bg-gradient-to-tr from-blue-400/15 via-indigo-400/15 to-purple-400/15 dark:from-blue-600/20 dark:via-indigo-600/20 dark:to-purple-600/20 blur-[100px]" />
         <div className="pointer-events-none absolute top-1/2 -left-32 h-64 w-64 rounded-full bg-blue-400/10 dark:bg-blue-500/15 blur-3xl" />

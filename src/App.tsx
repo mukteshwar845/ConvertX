@@ -405,7 +405,7 @@ export default function App() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-[background-color] duration-150">
       {/* Offline banner — fixed top */}
       <OfflineBanner />
 
@@ -595,18 +595,20 @@ export default function App() {
 
         {/* ── SETTINGS ───────────────────────────────────────────────── */}
         {activeTab === 'settings' && (
-          <SettingsView
-            isDark={isDark}
-            setIsDark={setIsDark}
-            historyCount={history.length}
-            onClearHistory={handleClearHistory}
-            onOpenPrivacyModal={() => setShowPrivacyModal(true)}
-            setActiveTab={(tab) => navigateTo(tab)}
-            isInstallable={isInstallable}
-            isStandalone={isStandalone}
-            onInstallClick={() => setShowInstallModal(true)}
-            onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
-          />
+          <div className="mx-auto max-w-4xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <SettingsView
+              isDark={isDark}
+              setIsDark={setIsDark}
+              historyCount={history.length}
+              onClearHistory={handleClearHistory}
+              onOpenPrivacyModal={() => setShowPrivacyModal(true)}
+              setActiveTab={(tab) => navigateTo(tab)}
+              isInstallable={isInstallable}
+              isStandalone={isStandalone}
+              onInstallClick={() => setShowInstallModal(true)}
+              onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
+            />
+          </div>
         )}
 
         {/* ── PDF STUDIO (UNIQUE) ─────────────────────────────────────── */}

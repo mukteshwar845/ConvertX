@@ -30,7 +30,7 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="hidden md:block mt-auto w-full border-t border-slate-200/80 bg-white/95 dark:border-slate-800/80 dark:bg-slate-950/95 backdrop-blur-xl transition-colors duration-200">
+    <footer className="hidden md:block mt-auto w-full border-t border-slate-200/80 bg-white/95 dark:border-slate-800/80 dark:bg-slate-950/95 backdrop-blur-xl transition-[background-color,border-color] duration-150">
       {/* Subtle top ambient accent line */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 

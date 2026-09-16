@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isToolsActive = ['compress', 'zip', 'privacy-cleaner', 'qr-studio'].includes(activeTab);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/90 transition-colors duration-200">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/90 transition-[background-color,border-color] duration-150">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* Brand */}
