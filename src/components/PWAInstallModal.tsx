@@ -1,4 +1,6 @@
+import React from 'react';
 import { Share, PlusSquare, X, CheckCircle2 } from 'lucide-react';
+
 
 interface PWAInstallModalProps {
   isOpen: boolean;
