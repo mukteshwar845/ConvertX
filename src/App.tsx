@@ -418,11 +418,12 @@ export default function App() {
         {/* ── HOME ──────────────────────────────────────────────────── */}
         {activeTab === 'home' && (
           <HomeView
-            setActiveTab={(tab) => navigateTo(tab)}
+            setActiveTab={(tab, subTool) => navigateTo(tab, subTool)}
             onFilesAdded={handleFilesAdded}
             isDark={isDark}
             isInstallable={isInstallable}
             onInstallClick={() => setShowInstallModal(true)}
+            onSetGlobalTarget={(tgt) => setGlobalTarget(tgt)}
           />
         )}
 
