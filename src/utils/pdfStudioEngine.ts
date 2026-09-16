@@ -89,7 +89,7 @@ export async function mergePdfFiles(
   const mergedPdfBytes = await mergedPdf.save();
   if (onProgress) onProgress(100, 'Done');
 
-  return new Blob([mergedPdfBytes], { type: 'application/pdf' });
+  return new Blob([mergedPdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 }
 
 /**
@@ -156,7 +156,7 @@ export async function splitPdfFile(
   const pdfBytes = await newPdf.save();
   if (onProgress) onProgress(100);
 
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 }
 
 /**
@@ -192,7 +192,7 @@ export async function rotatePdfPages(
   const pdfBytes = await pdfDoc.save();
   if (onProgress) onProgress(100);
 
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 }
 
 /**
@@ -268,5 +268,5 @@ export async function watermarkPdfFile(
   const pdfBytes = await pdfDoc.save();
   if (onProgress) onProgress(100);
 
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+  return new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
 }

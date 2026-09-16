@@ -47,14 +47,14 @@ async function runTests() {
 
     it('Detects PNG from \\x89PNG header', async () => {
       const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const file = new File([pngBytes], 'sample.png', { type: 'image/png' });
+      const file = new File([pngBytes as unknown as BlobPart], 'sample.png', { type: 'image/png' });
       const res = await detectFileFormat(file);
       assert.strictEqual(res.format, 'png');
     }),
 
     it('Detects JPEG from FF D8 FF header', async () => {
       const jpgBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
-      const file = new File([jpgBytes], 'photo.jpg', { type: 'image/jpeg' });
+      const file = new File([jpgBytes as unknown as BlobPart], 'photo.jpg', { type: 'image/jpeg' });
       const res = await detectFileFormat(file);
       assert.strictEqual(res.format, 'jpg');
     }),
@@ -63,7 +63,7 @@ async function runTests() {
       const zip = new JSZip();
       zip.file('word/document.xml', '<xml></xml>');
       const buf = await zip.generateAsync({ type: 'uint8array' });
-      const file = new File([buf], 'report.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const file = new File([buf as unknown as BlobPart], 'report.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       const res = await detectFileFormat(file);
       assert.strictEqual(res.format, 'docx');
     }),
@@ -73,7 +73,7 @@ async function runTests() {
       const ws = XLSX.utils.aoa_to_sheet([['A', 'B'], [1, 2]]);
       XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
       const outBuf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const file = new File([outBuf], 'data.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const file = new File([outBuf as unknown as BlobPart], 'data.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const res = await detectFileFormat(file);
       assert.strictEqual(res.format, 'xlsx');
     })

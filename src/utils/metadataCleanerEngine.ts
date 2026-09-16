@@ -309,7 +309,7 @@ export async function sanitizeFileMetadata(
     if (onProgress) onProgress(100);
 
     return {
-      cleanBlob: new Blob([cleanBytes], { type: 'application/pdf' }),
+      cleanBlob: new Blob([cleanBytes as unknown as BlobPart], { type: 'application/pdf' }),
       removedCount: 7,
       cleanFileName: `${baseName}_sanitized.pdf`,
     };
