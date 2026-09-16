@@ -175,8 +175,8 @@
 
 /* ── Install Button Visual Effects ────────────────────────────── */
 @keyframes sheenSweep {
-  0% { transform: translateX(-150%) skewX(-25deg); }
-  22%, 100% { transform: translateX(250%) skewX(-25deg); }
+  0% { transform: translateX(-160%) skewX(-25deg); }
+  25%, 100% { transform: translateX(260%) skewX(-25deg); }
 }
 
 .sheen-glow {
@@ -193,36 +193,36 @@
   height: 200%;
   background: linear-gradient(
     105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.42) 48%,
-    rgba(255, 255, 255, 0.65) 50%,
-    rgba(255, 255, 255, 0.42) 52%,
-    transparent 65%
+    transparent 38%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.22) 52%,
+    transparent 62%
   );
-  animation: sheenSweep 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: sheenSweep 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   pointer-events: none;
 }
 
 @keyframes pulseBorderGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.55), 0 4px 18px -2px rgba(37, 99, 235, 0.45);
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4), 0 2px 8px -1px rgba(37, 99, 235, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.2), 0 8px 26px 0px rgba(124, 58, 237, 0.55);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15), 0 4px 16px 0px rgba(99, 102, 241, 0.4);
   }
 }
 
 .install-btn-glow {
-  animation: pulseBorderGlow 2.8s ease-in-out infinite;
+  animation: pulseBorderGlow 3s ease-in-out infinite;
 }
 
 @keyframes installArrowBounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2.5px); }
+  50% { transform: translateY(-1.5px); }
 }
 
 .icon-bounce {
-  animation: installArrowBounce 1.8s ease-in-out infinite;
+  animation: installArrowBounce 2s ease-in-out infinite;
 }
 
 @keyframes gradientShift {
