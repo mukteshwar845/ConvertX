@@ -16,6 +16,9 @@ import { HistoryView } from './components/HistoryView';
 import { FileCompressView } from './components/FileCompressView';
 import { ZipCreatorView } from './components/ZipCreatorView';
 import { PreviewModal } from './components/PreviewModal';
+import { PDFStudioView } from './components/PDFStudioView';
+import { MetadataCleanerView } from './components/MetadataCleanerView';
+import { QRCodeStudioView } from './components/QRCodeStudioView';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { Footer } from './components/Footer';
@@ -134,7 +137,7 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab') as NavTab | null;
-      if (tabParam && ['home', 'convert', 'images', 'compress', 'zip', 'history', 'settings'].includes(tabParam)) {
+      if (tabParam && ['home', 'convert', 'images', 'compress', 'zip', 'history', 'settings', 'pdf-studio', 'privacy-cleaner', 'qr-studio'].includes(tabParam)) {
         navigateTo(tabParam);
       }
     }
@@ -604,6 +607,45 @@ export default function App() {
             onInstallClick={() => setShowInstallModal(true)}
             onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
           />
+        )}
+
+        {/* ── PDF STUDIO (UNIQUE) ─────────────────────────────────────── */}
+        {activeTab === 'pdf-studio' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <PDFStudioView
+              onAddToHistory={(rec) => {
+                setHistory((prev) => [rec, ...prev]);
+                dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+              }}
+              addToast={addToast}
+            />
+          </div>
+        )}
+
+        {/* ── PRIVACY SANITIZER (UNIQUE) ──────────────────────────────── */}
+        {activeTab === 'privacy-cleaner' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <MetadataCleanerView
+              onAddToHistory={(rec) => {
+                setHistory((prev) => [rec, ...prev]);
+                dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+              }}
+              addToast={addToast}
+            />
+          </div>
+        )}
+
+        {/* ── QR CODE STUDIO (UNIQUE) ─────────────────────────────────── */}
+        {activeTab === 'qr-studio' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <QRCodeStudioView
+              onAddToHistory={(rec) => {
+                setHistory((prev) => [rec, ...prev]);
+                dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+              }}
+              addToast={addToast}
+            />
+          </div>
         )}
 
         {/* Legacy desktop tabs — compress & zip accessible via desktop nav */}

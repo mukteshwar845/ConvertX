@@ -44,3 +44,7 @@ export function triggerBlobDownload(blob: Blob, fileName: string): void {
     }, 100);
   }
 }
+
+/** Alias for triggerBlobDownload */
+export const downloadBlob = triggerBlobDownload;
+

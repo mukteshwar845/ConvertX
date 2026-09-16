@@ -16,6 +16,9 @@ import {
   HardDrive,
   Cpu,
   Layers,
+  Stamp,
+  QrCode,
+  ShieldAlert,
 } from 'lucide-react';
 import { NavTab } from './Navbar';
 import { TargetFormat } from '../types';
@@ -313,7 +316,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Tool 1: Document Converter */}
           <div
             onClick={() => setActiveTab('convert', 'documents')}
@@ -341,7 +344,39 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
           </div>
 
-          {/* Tool 2: Image Converter */}
+          {/* Tool 2: PDF Studio Suite (Unique) */}
+          <div
+            onClick={() => setActiveTab('pdf-studio')}
+            className="group relative flex flex-col justify-between rounded-3xl border border-rose-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-rose-400 hover:shadow-xl dark:border-rose-900/50 dark:bg-slate-900/90 cursor-pointer"
+          >
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 shadow-xs mb-4 group-hover:scale-110 transition-transform">
+                <Stamp className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  ConvertX PDF Studio
+                </h3>
+                <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-black text-rose-600 dark:text-rose-400">
+                  Unique
+                </span>
+              </div>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                Merge multiple PDFs, split & extract custom page ranges, rotate misaligned scans, and stamp watermarks 100% in-browser.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <span className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 group-hover:underline">
+                Open PDF Studio <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+              <span className="rounded-lg bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                Merge · Split · Watermark
+              </span>
+            </div>
+          </div>
+
+          {/* Tool 3: Image Converter */}
           <div
             onClick={() => setActiveTab('images')}
             className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-purple-400 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/90 cursor-pointer"
@@ -368,7 +403,71 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
           </div>
 
-          {/* Tool 3: File Compressor */}
+          {/* Tool 4: Privacy Sanitizer (Unique) */}
+          <div
+            onClick={() => setActiveTab('privacy-cleaner')}
+            className="group relative flex flex-col justify-between rounded-3xl border border-emerald-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-400 hover:shadow-xl dark:border-emerald-900/50 dark:bg-slate-900/90 cursor-pointer"
+          >
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 shadow-xs mb-4 group-hover:scale-110 transition-transform">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Privacy Sanitizer
+                </h3>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                  Security
+                </span>
+              </div>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                Inspect and strip hidden author profiles, revision timestamps, device fingerprints, and EXIF tags from PDFs, Word, and images.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:underline">
+                Sanitize Document <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+              <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                Zero Data Leak
+              </span>
+            </div>
+          </div>
+
+          {/* Tool 5: QR Code Studio (Unique) */}
+          <div
+            onClick={() => setActiveTab('qr-studio')}
+            className="group relative flex flex-col justify-between rounded-3xl border border-indigo-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl dark:border-indigo-900/50 dark:bg-slate-900/90 cursor-pointer"
+          >
+            <div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 shadow-xs mb-4 group-hover:scale-110 transition-transform">
+                <QrCode className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Universal QR Studio
+                </h3>
+                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-black text-indigo-600 dark:text-indigo-400">
+                  Vector
+                </span>
+              </div>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                Generate custom QR codes for URLs, WiFi networks, and contact cards with SVG vector, PNG, and printable A4 PDF card downloads.
+              </p>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:underline">
+                Design QR Code <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+              <span className="rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                SVG · PNG · PDF Card
+              </span>
+            </div>
+          </div>
+
+          {/* Tool 6: File Compressor & ZIP */}
           <div
             onClick={() => setActiveTab('compress')}
             className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-indigo-400 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/90 cursor-pointer"
@@ -378,46 +477,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <Minimize2 className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                File Compressor
+                File Compressor & ZIP
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                Shrink file sizes for PDFs, Word files, and photos by up to 85% for email attachments and portal upload limits.
+                Shrink file sizes for PDFs, Word files, and photos by up to 85% or package folders into clean .zip archives with zero upload caps.
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
               <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:underline">
-                Compress Files <ArrowRight className="h-3.5 w-3.5" />
+                Compress & Bundle <ArrowRight className="h-3.5 w-3.5" />
               </span>
               <span className="rounded-lg bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                 Save up to 85%
-              </span>
-            </div>
-          </div>
-
-          {/* Tool 4: ZIP Archiver */}
-          <div
-            onClick={() => setActiveTab('zip')}
-            className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-emerald-400 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/90 cursor-pointer"
-          >
-            <div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 shadow-xs mb-4 group-hover:scale-110 transition-transform">
-                <Archive className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Universal ZIP Archiver
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                Bundle individual files or entire folder trees into clean, compressed .zip archives with zero upload size caps.
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:underline">
-                Create ZIP <ArrowRight className="h-3.5 w-3.5" />
-              </span>
-              <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                Zero Size Limits
               </span>
             </div>
           </div>

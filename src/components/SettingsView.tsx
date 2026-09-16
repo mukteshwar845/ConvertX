@@ -2,9 +2,10 @@ import React from 'react';
 import {
   Moon, Sun, Shield, Trash2, Info, ChevronRight,
   Palette, Clock, HardDrive, Zap, Download, Archive, Minimize2,
-  CheckCircle2, Smartphone,
+  CheckCircle2, Smartphone, Stamp, QrCode, ShieldAlert,
 } from 'lucide-react';
 import { MobileTab } from './BottomNav';
+import { NavTab } from './Navbar';
 
 interface SettingsViewProps {
   isDark: boolean;
@@ -12,11 +13,11 @@ interface SettingsViewProps {
   historyCount: number;
   onClearHistory: () => void;
   onOpenPrivacyModal: () => void;
-  setActiveTab: (tab: MobileTab) => void;
+  setActiveTab: (tab: NavTab) => void;
   isInstallable: boolean;
   isStandalone?: boolean;
   onInstallClick: () => void;
-  onNavigateTo: (tab: MobileTab, subTool?: string) => void;
+  onNavigateTo: (tab: NavTab, subTool?: string) => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -163,15 +164,36 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Tools */}
       <Section title="Tools">
         <Row
-          icon={<Minimize2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+          icon={<Stamp className="h-4 w-4 text-rose-600 dark:text-rose-400" />}
+          iconBg="bg-rose-50 dark:bg-rose-950/60"
+          label="PDF Studio"
+          sublabel="Merge, split, rotate & watermark PDFs"
+          onClick={() => onNavigateTo('pdf-studio')}
+        />
+        <Row
+          icon={<ShieldAlert className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+          label="Privacy Sanitizer"
+          sublabel="Wipe hidden author tags, EXIF & GPS"
+          onClick={() => onNavigateTo('privacy-cleaner')}
+        />
+        <Row
+          icon={<QrCode className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
           iconBg="bg-indigo-50 dark:bg-indigo-950/60"
+          label="QR Code Studio"
+          sublabel="Create vector SVG, PNG & printable PDF cards"
+          onClick={() => onNavigateTo('qr-studio')}
+        />
+        <Row
+          icon={<Minimize2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
           label="Compress Files"
           sublabel="Reduce image, PDF & office file sizes"
           onClick={() => onNavigateTo('convert', 'compress')}
         />
         <Row
-          icon={<Archive className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+          icon={<Archive className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
+          iconBg="bg-amber-50 dark:bg-amber-950/60"
           label="ZIP Creator"
           sublabel="Package files into ZIP archives"
           onClick={() => onNavigateTo('convert', 'zip')}

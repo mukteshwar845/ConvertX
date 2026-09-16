@@ -8,6 +8,9 @@ import {
   Archive,
   History,
   Lock,
+  Stamp,
+  QrCode,
+  ShieldAlert,
 } from 'lucide-react';
 import { NavTab } from './Navbar';
 
@@ -71,6 +74,42 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => {
+                    onNavigateTab('pdf-studio');
+                    scrollToTop();
+                  }}
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 transition"
+                >
+                  <Stamp className="h-3 w-3 text-rose-500 shrink-0" />
+                  <span>PDF Studio</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigateTab('privacy-cleaner');
+                    scrollToTop();
+                  }}
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition"
+                >
+                  <ShieldAlert className="h-3 w-3 text-emerald-500 shrink-0" />
+                  <span>Privacy Sanitizer</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigateTab('qr-studio');
+                    scrollToTop();
+                  }}
+                  className="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition"
+                >
+                  <QrCode className="h-3 w-3 text-indigo-500 shrink-0" />
+                  <span>QR Code Studio</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
                     onNavigateTab('convert');
                     scrollToTop();
                   }}
@@ -104,30 +143,6 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>Compress Files</span>
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onNavigateTab('zip');
-                    scrollToTop();
-                  }}
-                  className="flex items-center gap-1.5 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition"
-                >
-                  <Archive className="h-3 w-3 text-emerald-500 shrink-0" />
-                  <span>ZIP Archiver</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onNavigateTab('history');
-                    scrollToTop();
-                  }}
-                  className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
-                >
-                  <History className="h-3 w-3 text-slate-400 shrink-0" />
-                  <span>Conversion History</span>
-                </button>
-              </li>
             </ul>
           </div>
 
@@ -137,11 +152,12 @@ export const Footer: React.FC<FooterProps> = ({
               Features
             </h4>
             <ul className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <li>PDF & Word Formatting</li>
-              <li>Batch Conversion & Export</li>
-              <li>Image Quality Optimization</li>
-              <li>Extreme Size Reduction</li>
-              <li>Folder Tree Preservation</li>
+              <li>Client-Side PDF Merge & Split</li>
+              <li>Document Watermark Stamping</li>
+              <li>EXIF & Metadata Stripper</li>
+              <li>Vector SVG & Printable QR Codes</li>
+              <li>High-Ratio File Compression</li>
+              <li>100% In-Browser Privacy</li>
             </ul>
           </div>
 
