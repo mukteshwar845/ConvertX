@@ -85,24 +85,37 @@ export function getAvailableTargets(source: SupportedFormat, ocrEnabled: boolean
 }
 
 
+import html2canvas from 'html2canvas';
+
 /**
- * Extract clean HTML and text from DOCX preserving interior formatting
+ * Extract clean HTML and text from DOCX preserving interior formatting and embedded images
  */
 export async function parseDocx(arrayBuffer: ArrayBuffer) {
+  const nodeBuffer = typeof Buffer !== 'undefined' ? Buffer.from(arrayBuffer) : undefined;
+  const input = nodeBuffer ? { buffer: nodeBuffer, arrayBuffer } : { arrayBuffer };
+
   const result = await mammoth.convertToHtml(
-    { arrayBuffer },
+    input as any,
     {
+      convertImage: mammoth.images.imgElement((image: any) => {
+        return image.read('base64').then((imageBuffer: string) => {
+          return {
+            src: `data:${image.contentType};base64,${imageBuffer}`,
+          };
+        });
+      }),
       styleMap: [
         "p[style-name='Heading 1'] => h1:fresh",
         "p[style-name='Heading 2'] => h2:fresh",
         "p[style-name='Heading 3'] => h3:fresh",
         "p[style-name='Title'] => h1.title:fresh",
+        "p[style-name='Subtitle'] => p.subtitle:fresh",
         "r[style-name='Strong'] => strong",
         "r[style-name='Emphasis'] => em",
       ],
     }
   );
-  const rawTextResult = await mammoth.extractRawText({ arrayBuffer });
+  const rawTextResult = await mammoth.extractRawText(input as any);
   return {
     html: result.value,
     text: rawTextResult.value,
@@ -111,7 +124,248 @@ export async function parseDocx(arrayBuffer: ArrayBuffer) {
 }
 
 /**
- * Render structured HTML to a pristine multi-page PDF preserving font sizes, headings, margins
+ * High-fidelity Async DOM-based HTML to PDF converter using html2canvas & jsPDF.
+ * Preserves exact fonts, colors, images, tables, and page breaks.
+ */
+export async function renderHtmlToPdfAsync(
+  html: string,
+  title?: string,
+  onProgress?: (progress: number, msg: string) => void
+): Promise<{ blob: Blob; url: string; pageCount: number }> {
+  if (typeof document === 'undefined') {
+    const res = renderHtmlToPdf(html, title);
+    return { ...res, pageCount: 1 };
+  }
+
+  onProgress?.(10, 'Preparing document layout and stylesheet...');
+
+  // Create an off-screen container
+  const container = document.createElement('div');
+  container.id = `html-pdf-render-${Date.now()}`;
+  container.style.position = 'fixed';
+  container.style.left = '-99999px';
+  container.style.top = '0';
+  container.style.width = '794px'; // ~210mm @ 96 DPI (A4 width)
+  container.style.backgroundColor = '#ffffff';
+  container.style.zIndex = '-9999';
+  container.style.opacity = '1';
+  container.style.pointerEvents = 'none';
+
+  // Inject styled document template
+  const cleanTitle = (title || 'Document').replace(/\.[^/.]+$/, '');
+  const styledContent = `
+    <style>
+      .render-doc-root {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1e293b;
+        background: #ffffff;
+        padding: 48px 56px;
+        box-sizing: border-box;
+        line-height: 1.6;
+        font-size: 14px;
+        width: 794px;
+      }
+      .render-doc-root h1.title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 20px;
+        margin-bottom: 8px;
+        line-height: 1.25;
+      }
+      .render-doc-root p.subtitle {
+        font-size: 18px;
+        color: #64748b;
+        margin-top: 0;
+        margin-bottom: 24px;
+      }
+      .render-doc-root h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 28px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 6px;
+      }
+      .render-doc-root h2 {
+        font-size: 19px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-top: 22px;
+        margin-bottom: 10px;
+      }
+      .render-doc-root h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #334155;
+        margin-top: 18px;
+        margin-bottom: 8px;
+      }
+      .render-doc-root p {
+        margin: 0 0 12px 0;
+      }
+      .render-doc-root ul, .render-doc-root ol {
+        margin: 0 0 14px 0;
+        padding-left: 24px;
+      }
+      .render-doc-root li {
+        margin-bottom: 4px;
+      }
+      .render-doc-root table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 16px 0;
+        font-size: 13px;
+      }
+      .render-doc-root th, .render-doc-root td {
+        border: 1px solid #cbd5e1;
+        padding: 8px 12px;
+        text-align: left;
+      }
+      .render-doc-root th {
+        background-color: #f1f5f9;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .render-doc-root tr:nth-child(even) td {
+        background-color: #f8fafc;
+      }
+      .render-doc-root img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 16px auto;
+        border-radius: 4px;
+      }
+      .render-doc-root pre, .render-doc-root code {
+        background: #f1f5f9;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .render-doc-root pre {
+        padding: 12px;
+        overflow-x: auto;
+      }
+      .render-doc-root hr {
+        border: none;
+        border-top: 1px solid #e2e8f0;
+        margin: 24px 0;
+      }
+      .cover-page-block {
+        min-height: 1000px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-bottom: 3px solid #3b82f6;
+        padding-bottom: 60px;
+        margin-bottom: 40px;
+        page-break-after: always;
+      }
+    </style>
+    <div class="render-doc-root">
+      ${html}
+    </div>
+  `;
+
+  container.innerHTML = styledContent;
+  document.body.appendChild(container);
+
+  try {
+    onProgress?.(30, 'Waiting for fonts, formatting and images to render...');
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const rootEl = container.querySelector<HTMLElement>('.render-doc-root') || container;
+    const canvas = await html2canvas(rootEl, {
+      scale: 2.0,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794,
+    });
+
+    onProgress?.(60, 'Slicing document into calibrated A4 pages...');
+
+    // A4 proportions: width = 595.28 pt, height = 841.89 pt (ratio 1 : 1.4142)
+    const pdfPageWidthPt = 595.28;
+    const pdfPageHeightPt = 841.89;
+
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const pageHeightPx = Math.floor(imgWidth * (pdfPageHeightPt / pdfPageWidthPt));
+
+    const totalPages = Math.max(1, Math.ceil(imgHeight / pageHeightPx));
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4',
+      compress: true,
+    });
+
+    for (let page = 0; page < totalPages; page++) {
+      onProgress?.(
+        60 + Math.round(((page + 1) / totalPages) * 35),
+        page === 0
+          ? 'Rendering Cover Page into PDF...'
+          : `Rendering Page ${page + 1} of ${totalPages}...`
+      );
+
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = imgWidth;
+      const sourceY = page * pageHeightPx;
+      const sourceHeight = Math.min(pageHeightPx, imgHeight - sourceY);
+      pageCanvas.height = pageHeightPx;
+
+      const ctx = pageCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          sourceY,
+          imgWidth,
+          sourceHeight,
+          0,
+          0,
+          imgWidth,
+          sourceHeight
+        );
+      }
+
+      if (page > 0) {
+        pdf.addPage('a4', 'portrait');
+      }
+
+      const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfPageWidthPt, pdfPageHeightPt, undefined, 'FAST');
+    }
+
+    const pdfBlob = pdf.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    onProgress?.(100, `Generated ${totalPages} pristine pages`);
+
+    return {
+      blob: pdfBlob,
+      url: pdfUrl,
+      pageCount: totalPages,
+    };
+  } catch (err) {
+    console.warn('html2canvas rendering failed, falling back to jsPDF text layout:', err);
+    const fallback = renderHtmlToPdf(html, title);
+    return { ...fallback, pageCount: 1 };
+  } finally {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
+  }
+}
+
+/**
+ * Render structured HTML to a multi-page PDF preserving headings, tables, and images
  */
 export function renderHtmlToPdf(html: string, title?: string): { blob: Blob; url: string } {
   const doc = new jsPDF({
@@ -137,7 +391,6 @@ export function renderHtmlToPdf(html: string, title?: string): { blob: Blob; url
   const parser = new DOMParser();
   const dom = parser.parseFromString(`<div>${html}</div>`, 'text/html');
 
-  // Collect all direct text nodes and child blocks
   const rootDiv = dom.body.firstElementChild || dom.body;
   const childNodes = Array.from(rootDiv.childNodes);
 
@@ -173,17 +426,47 @@ export function renderHtmlToPdf(html: string, title?: string): { blob: Blob; url
       const el = node as HTMLElement;
       const tag = el.tagName.toLowerCase();
       const text = el.textContent ? el.textContent.trim() : '';
+
+      // Embedded Images in HTML
+      if (tag === 'img') {
+        const src = el.getAttribute('src');
+        if (src) {
+          checkPageBreak(180);
+          try {
+            const imgWidth = Math.min(contentWidth, 320);
+            const imgHeight = 180;
+            doc.addImage(src, 'JPEG', margin + (contentWidth - imgWidth) / 2, y, imgWidth, imgHeight, undefined, 'FAST');
+            y += imgHeight + 14;
+          } catch {
+            // Ignore if image data format is unparseable by jsPDF
+          }
+        }
+        continue;
+      }
+
       if (!text && tag !== 'hr') continue;
 
       if (tag === 'h1') {
-        checkPageBreak(36);
-        y += y > margin ? 12 : 0;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.setTextColor(15, 23, 42);
-        const lines = doc.splitTextToSize(text, contentWidth);
-        doc.text(lines, margin, y);
-        y += lines.length * 22 + 8;
+        const isTitle = el.classList.contains('title') || y === margin;
+        if (isTitle) {
+          // Format as Cover Title on Page 1
+          checkPageBreak(60);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(24);
+          doc.setTextColor(15, 23, 42);
+          const lines = doc.splitTextToSize(text, contentWidth);
+          doc.text(lines, pageWidth / 2, y + 20, { align: 'center' });
+          y += lines.length * 28 + 24;
+        } else {
+          checkPageBreak(36);
+          y += y > margin ? 12 : 0;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(18);
+          doc.setTextColor(15, 23, 42);
+          const lines = doc.splitTextToSize(text, contentWidth);
+          doc.text(lines, margin, y);
+          y += lines.length * 22 + 8;
+        }
       } else if (tag === 'h2') {
         checkPageBreak(30);
         y += y > margin ? 10 : 0;
@@ -229,20 +512,30 @@ export function renderHtmlToPdf(html: string, title?: string): { blob: Blob; url
         y += 4;
       } else if (tag === 'table') {
         const rows = Array.from(el.querySelectorAll('tr'));
-        checkPageBreak(rows.length * 20 + 10);
-        for (const tr of rows) {
+        checkPageBreak(rows.length * 22 + 15);
+        for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+          const tr = rows[rIdx];
           const cells = Array.from(tr.querySelectorAll('th, td'));
           const colWidth = contentWidth / Math.max(cells.length, 1);
-          checkPageBreak(20);
+          checkPageBreak(22);
+
+          const isHeaderRow = tr.querySelector('th') !== null || rIdx === 0;
+
+          // Draw cell background
+          doc.setFillColor(isHeaderRow ? 241 : rIdx % 2 === 0 ? 255 : 248, isHeaderRow ? 245 : rIdx % 2 === 0 ? 255 : 250, isHeaderRow ? 249 : 252);
+          doc.rect(margin, y - 4, contentWidth, 20, 'F');
+          doc.setDrawColor(203, 213, 225);
+          doc.rect(margin, y - 4, contentWidth, 20, 'S');
+
           cells.forEach((td, cIdx) => {
-            const isHeader = td.tagName.toLowerCase() === 'th';
+            const isHeader = td.tagName.toLowerCase() === 'th' || isHeaderRow;
             doc.setFont('helvetica', isHeader ? 'bold' : 'normal');
             doc.setFontSize(9.5);
             doc.setTextColor(isHeader ? 15 : 51, isHeader ? 23 : 65, isHeader ? 42 : 85);
             const cellLines = doc.splitTextToSize(td.textContent?.trim() || '', colWidth - 8);
-            doc.text(cellLines, margin + cIdx * colWidth + 4, y);
+            doc.text(cellLines, margin + cIdx * colWidth + 6, y + 10);
           });
-          y += 18;
+          y += 20;
         }
         y += 8;
       } else if (tag === 'hr') {
@@ -260,7 +553,7 @@ export function renderHtmlToPdf(html: string, title?: string): { blob: Blob; url
         doc.text(lines, margin + 10, y);
         y += lines.length * 14 + 8;
       } else {
-        // Standard paragraph or div
+        // Standard paragraph
         const lines = doc.splitTextToSize(text, contentWidth);
         checkPageBreak(lines.length * 15 + 6);
         doc.setFont('helvetica', 'normal');

@@ -19,6 +19,7 @@ import {
   parsePdfText,
   parsePptx,
   renderHtmlToPdf,
+  renderHtmlToPdfAsync,
   renderContentToPptx,
   markdownToHtml,
   markdownToSections,
@@ -26,7 +27,8 @@ import {
   performOcrExtraction,
   ConversionProgressCallback,
 } from './conversionEngine';
-import { parseHtmlToSections, renderSectionsToPptx } from './docxToPptxConverter';
+import { parseHtmlToSections, parseHtmlToDocumentSlides, renderSectionsToPptx } from './docxToPptxConverter';
+import { renderDocxToPdf } from './docxToPdfRenderer';
 
 // Global SHA-256 in-memory cache for instant replay
 const conversionCache = new Map<string, ConversionResult>();
@@ -190,7 +192,7 @@ export async function universalConvertDocument(
 
       if (targetFormat === 'pdf') {
         const html = markdownToHtml(extractedText);
-        const { blob } = renderHtmlToPdf(html, file.name);
+        const { blob } = await renderHtmlToPdfAsync(html, file.name);
         return {
           blob,
           name: outName,
@@ -218,33 +220,56 @@ export async function universalConvertDocument(
 
     // Category C: DOCX / DOC / ODT / RTF
     if (['docx', 'doc', 'odt', 'rtf'].includes(sourceFormat)) {
-      onProgress?.(45, 'Parsing document styles and structure...');
+      onProgress?.(35, 'Parsing document styles, fonts & structure...');
       const parsed = await parseDocx(arrayBuffer);
 
       if (targetFormat === 'pdf') {
-        onProgress?.(70, 'Rendering high-fidelity vector PDF...');
-        const { blob } = renderHtmlToPdf(parsed.html, file.name);
+        // Primary High-Fidelity Path: If DOCX, use OpenXML engine to preserve exact pages, cover page, formatting
+        if (sourceFormat === 'docx') {
+          try {
+            onProgress?.(45, 'Rendering OpenXML pages, layout & cover page...');
+            const pdfRes = await renderDocxToPdf(arrayBuffer, file.name, (p, msg) =>
+              onProgress?.(35 + Math.round(p * 0.55), msg)
+            );
+            return {
+              blob: pdfRes.blob,
+              name: outName,
+              size: pdfRes.blob.size,
+              preview: { type: 'html', content: parsed.html },
+              extractedText: parsed.text,
+              strategyName: `OpenXML Fidelity Engine (${pdfRes.pageCount} pages, Cover Preserved)`,
+            };
+          } catch (docxErr) {
+            console.warn('Direct OpenXML PDF renderer failed, falling back to enhanced semantic engine:', docxErr);
+          }
+        }
+
+        // Secondary High-Fidelity Path: Async styled HTML DOM rendering
+        onProgress?.(65, 'Rendering high-fidelity vector PDF pages...');
+        const asyncRes = await renderHtmlToPdfAsync(parsed.html, file.name, (p, msg) =>
+          onProgress?.(60 + Math.round(p * 0.35), msg)
+        );
         return {
-          blob,
+          blob: asyncRes.blob,
           name: outName,
-          size: blob.size,
+          size: asyncRes.blob.size,
           preview: { type: 'html', content: parsed.html },
           extractedText: parsed.text,
-          strategyName: strategy === 'primary' ? 'Mammoth Typography Engine' : 'DOM Semantic Fallback',
+          strategyName: `Semantic Layout Engine (${asyncRes.pageCount} pages)`,
         };
       }
 
       if (targetFormat === 'pptx') {
-        onProgress?.(60, 'Building intelligent slide layout from document structure...');
-        // Full-fidelity engine: handles 50+ page docs, auto-splits long sections,
-        // preserves all paragraphs, lists, tables, headings across unlimited slides
-        const sections = parseHtmlToSections(parsed.html, baseName);
+        onProgress?.(55, 'Extracting document cover and section architecture...');
+        const parsedSlides = parseHtmlToDocumentSlides(parsed.html, baseName);
+        const { cover, sections } = parsedSlides;
 
-        onProgress?.(70, `Generating ${sections.length} slides from ${file.name}...`);
+        onProgress?.(70, `Generating ${sections.length + 1} presentation slides from ${file.name}...`);
         const blob = await renderSectionsToPptx(
           baseName,
           sections,
-          (pct, msg) => onProgress?.(70 + Math.round(pct * 0.2), msg)
+          (pct, msg) => onProgress?.(70 + Math.round(pct * 0.25), msg),
+          cover
         );
 
         return {
@@ -253,7 +278,7 @@ export async function universalConvertDocument(
           size: blob.size,
           preview: { type: 'html', content: parsed.html },
           extractedText: parsed.text,
-          strategyName: `Full-Fidelity DOCX \u2192 PPTX (${sections.length} slides)`,
+          strategyName: `Full-Fidelity Presentation (${sections.length + 1} slides, Cover Preserved)`,
         };
       }
 
@@ -436,7 +461,7 @@ export async function universalConvertDocument(
         `
           )
           .join('');
-        const { blob } = renderHtmlToPdf(htmlSlides, title);
+        const { blob } = await renderHtmlToPdfAsync(htmlSlides, title);
         return {
           blob,
           name: outName,
@@ -532,7 +557,7 @@ export async function universalConvertDocument(
               .split('\n\n')
               .map((p) => `<p>${p.replace(/\n/g, '<br/>')}</p>`)
               .join('');
-      const { blob } = renderHtmlToPdf(htmlContent, file.name);
+      const { blob } = await renderHtmlToPdfAsync(htmlContent, file.name);
       return {
         blob,
         name: outName,

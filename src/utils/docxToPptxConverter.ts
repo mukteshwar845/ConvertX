@@ -3,13 +3,13 @@
  *
  * Full-fidelity DOCX → PPTX conversion engine.
  *
- * Key design decisions:
- * - Uses mammoth to convert DOCX to rich HTML preserving headings, paragraphs, lists, tables
- * - Walks all HTML nodes intelligently to build a structured slide model
- * - Splits oversized sections into multiple slides automatically (no content lost)
- * - Handles documents with NO headings by auto-chunking on paragraph density
- * - Each slide body is word-count balanced (max ~120 words) so text is readable
- * - Tables are converted to readable rows per slide
+ * Key features:
+ * - Detects and preserves true cover page (title, subtitle, author, date) as Slide 1
+ * - Preserves headings, paragraphs, lists, and formatted tables
+ * - Renders tables as native PowerPoint tables with styled headers
+ * - Splits oversized sections into multiple slides automatically
+ * - Handles documents with no headings by auto-chunking on paragraph density
+ * - Each slide body is word-count balanced (max ~110 words) for clean readability
  * - Pure client-side — no server, no external API
  */
 
@@ -23,26 +23,165 @@ export interface SlideSection {
     bold?: boolean;
     italic?: boolean;
   }>;
+  table?: string[][];     // Native table matrix if section contains a table
+}
+
+export interface DocumentCoverInfo {
+  title: string;
+  subtitle?: string;
+  author?: string;
+  date?: string;
+}
+
+export interface ParsedDocumentSlides {
+  cover: DocumentCoverInfo;
+  sections: SlideSection[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAX_WORDS_PER_SLIDE = 110;  // readable word cap per slide body
-const MAX_BULLETS_PER_SLIDE = 9;  // max physical line items before auto-split
+const MAX_BULLETS_PER_SLIDE = 8;   // max physical line items before auto-split
 
-// ─── HTML → SlideSection[] Parser ─────────────────────────────────────────────
+// ─── HTML → ParsedDocumentSlides Parser ─────────────────────────────────────────
 export function parseHtmlToSections(html: string, docTitle: string): SlideSection[] {
-  const parser = new DOMParser();
-  const dom = parser.parseFromString(`<div id="root">${html}</div>`, 'text/html');
-  const root = dom.getElementById('root');
-  if (!root) return [];
+  const parsed = parseHtmlToDocumentSlides(html, docTitle);
+  return parsed.sections;
+}
 
-  const allNodes = Array.from(root.childNodes);
+interface ExtractedElement {
+  tag: string;
+  text: string;
+  hasBold?: boolean;
+  hasItalic?: boolean;
+  isTitle?: boolean;
+  tableData?: string[][];
+  listItems?: string[];
+}
+
+function extractElementsFromHtml(html: string): ExtractedElement[] {
+  if (typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(`<div id="root">${html}</div>`, 'text/html');
+    const root = dom.getElementById('root');
+    if (!root) return [];
+    const elements: ExtractedElement[] = [];
+    for (const node of Array.from(root.childNodes)) {
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      const el = node as Element;
+      const tag = el.tagName.toLowerCase();
+      const rawText = el.textContent?.trim() ?? '';
+      const text = rawText
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+
+      if (tag === 'table') {
+        const rows = Array.from(el.querySelectorAll('tr'));
+        const tableData: string[][] = [];
+        for (const tr of rows) {
+          const cells = Array.from(tr.querySelectorAll('td, th')).map((c) =>
+            (c.textContent?.trim() ?? '').replace(/&amp;/g, '&')
+          );
+          if (cells.some((c) => c.length > 0)) tableData.push(cells);
+        }
+        elements.push({ tag: 'table', text: '', tableData });
+      } else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(el.querySelectorAll('li'))
+          .map((li) => (li.textContent?.trim() ?? '').replace(/&amp;/g, '&'))
+          .filter(Boolean);
+        elements.push({ tag, text: '', listItems: items });
+      } else {
+        elements.push({
+          tag,
+          text,
+          hasBold: el.querySelector('strong, b') !== null,
+          hasItalic: el.querySelector('em, i') !== null,
+          isTitle: el.classList.contains('title'),
+        });
+      }
+    }
+    return elements;
+  }
+
+  // Robust Regex Tokenizer Fallback for Node / Non-DOM environments
+  const elements: ExtractedElement[] = [];
+  const regex = /<(h[1-6]|p|div|blockquote|table|ul|ol)([^>]*)>([\s\S]*?)<\/\1>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const tag = match[1].toLowerCase();
+    const attrs = match[2];
+    const innerHtml = match[3];
+
+    if (tag === 'table') {
+      const tableData: string[][] = [];
+      const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+      let trMatch;
+      while ((trMatch = trRegex.exec(innerHtml)) !== null) {
+        const rowContent = trMatch[1];
+        const cellRegex = /<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi;
+        const cells: string[] = [];
+        let cellMatch;
+        while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+          const rawCell = cellMatch[1].replace(/<[^>]+>/g, '').trim();
+          cells.push(rawCell.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'));
+        }
+        if (cells.length > 0) tableData.push(cells);
+      }
+      elements.push({ tag: 'table', text: '', tableData });
+    } else if (tag === 'ul' || tag === 'ol') {
+      const listItems: string[] = [];
+      const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let liMatch;
+      while ((liMatch = liRegex.exec(innerHtml)) !== null) {
+        const itemText = liMatch[1].replace(/<[^>]+>/g, '').trim();
+        if (itemText) listItems.push(itemText.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'));
+      }
+      elements.push({ tag, text: '', listItems });
+    } else {
+      const text = innerHtml
+        .replace(/<[^>]+>/g, '')
+        .trim()
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"');
+      elements.push({
+        tag,
+        text,
+        hasBold: /<(strong|b)[^>]*>/i.test(innerHtml),
+        hasItalic: /<(em|i)[^>]*>/i.test(innerHtml),
+        isTitle: /class=["'][^"']*title[^"']*["']/i.test(attrs),
+      });
+    }
+  }
+  return elements;
+}
+
+export function parseHtmlToDocumentSlides(html: string, docTitle: string): ParsedDocumentSlides {
+  const cleanDocTitle = docTitle.replace(/\.[^/.]+$/, '').trim();
+  const allElements = extractElementsFromHtml(html);
+
+  const defaultCover: DocumentCoverInfo = {
+    title: cleanDocTitle,
+    subtitle: 'Preserved Presentation Structure',
+  };
+
+  if (allElements.length === 0) {
+    return {
+      cover: defaultCover,
+      sections: [{ title: cleanDocTitle, bullets: [{ text: 'Document converted to presentation format.', level: 0 }] }],
+    };
+  }
+
   const sections: SlideSection[] = [];
   let current: SlideSection | null = null;
+  let detectedCover: DocumentCoverInfo | null = null;
+  let isFirstHeading = true;
 
   const flush = () => {
-    if (current && (current.bullets.length > 0 || current.title)) {
-      // Split current section into multiple slides if too large
+    if (current && (current.bullets.length > 0 || current.table || current.title)) {
       const chunks = splitSectionIntoSlides(current);
       sections.push(...chunks);
     }
@@ -58,28 +197,61 @@ export function parseHtmlToSections(html: string, docTitle: string): SlideSectio
   const currentWordCount = () =>
     current?.bullets.reduce((acc, b) => acc + wordCount(b.text), 0) ?? 0;
 
-  for (const node of allNodes) {
-    if (node.nodeType !== Node.ELEMENT_NODE) continue;
-    const el = node as Element;
-    const tag = el.tagName.toLowerCase();
-    const text = el.textContent?.trim() ?? '';
-    if (!text) continue;
+  for (let i = 0; i < allElements.length; i++) {
+    const el = allElements[i];
+    const tag = el.tag;
+    const text = el.text;
+    if (!text && tag !== 'table' && (!el.listItems || el.listItems.length === 0)) continue;
 
-    // Headings → new section boundary
-    if (tag === 'h1') {
+    // Check for Cover Page / Title Block at start of document
+    if (isFirstHeading && (tag === 'h1' || el.isTitle)) {
+      isFirstHeading = false;
+      let coverTitle = text || cleanDocTitle;
+      let coverSubtitle = '';
+      let coverAuthor = '';
+      let coverDate = '';
+
+      // Look at subsequent elements for subtitle, author, date before next heading
+      let lookAhead = i + 1;
+      while (lookAhead < allElements.length) {
+        const nextEl = allElements[lookAhead];
+        if (nextEl.tag === 'h1' || nextEl.tag === 'h2') break;
+
+        const nextText = nextEl.text;
+        if (nextText) {
+          const lower = nextText.toLowerCase();
+          if (lower.includes('author') || lower.includes('by ') || lower.includes('prepared by')) {
+            coverAuthor = nextText;
+          } else if (/\b(20\d\d|19\d\d|january|february|march|april|may|june|july|august|september|october|november|december)\b/i.test(nextText)) {
+            coverDate = nextText;
+          } else if (!coverSubtitle && nextText.length < 120) {
+            coverSubtitle = nextText;
+          }
+        }
+        lookAhead++;
+      }
+
+      detectedCover = {
+        title: coverTitle,
+        subtitle: coverSubtitle || 'Preserved Presentation Layout',
+        author: coverAuthor || undefined,
+        date: coverDate || undefined,
+      };
+
+      i = lookAhead - 1;
+      continue;
+    }
+
+    if (tag === 'h1' || tag === 'h2') {
+      isFirstHeading = false;
       flush();
       current = { title: text, bullets: [] };
       continue;
     }
-    if (tag === 'h2') {
-      flush();
-      current = { title: text, bullets: [] };
-      continue;
-    }
+
     if (tag === 'h3') {
-      // h3 within a section becomes a sub-title / bold bullet rather than new section
+      isFirstHeading = false;
       ensureCurrent();
-      // Only start a new section if current already has content
       if (current!.bullets.length > 0) {
         flush();
         current = { title: text, bullets: [] };
@@ -89,14 +261,13 @@ export function parseHtmlToSections(html: string, docTitle: string): SlideSectio
       continue;
     }
 
-    // Unordered / ordered list
-    if (tag === 'ul' || tag === 'ol') {
+    // Lists
+    if (tag === 'ul' || tag === 'ol' || (el.listItems && el.listItems.length > 0)) {
+      isFirstHeading = false;
       ensureCurrent();
-      const items = Array.from(el.querySelectorAll('li'));
-      for (const li of items) {
-        const liText = li.textContent?.trim() ?? '';
+      const items = el.listItems || [];
+      for (const liText of items) {
         if (!liText) continue;
-        // Auto-split if slide is getting too big
         if (
           currentWordCount() + wordCount(liText) > MAX_WORDS_PER_SLIDE ||
           current!.bullets.length >= MAX_BULLETS_PER_SLIDE
@@ -109,44 +280,33 @@ export function parseHtmlToSections(html: string, docTitle: string): SlideSectio
       continue;
     }
 
-    // Table → render as indented rows
-    if (tag === 'table') {
-      ensureCurrent();
-      const rows = Array.from(el.querySelectorAll('tr'));
-      for (const row of rows) {
-        const cells = Array.from(row.querySelectorAll('td, th'))
-          .map((c) => c.textContent?.trim() ?? '')
-          .filter(Boolean);
-        if (!cells.length) continue;
-        const rowText = cells.join('  |  ');
-        if (
-          currentWordCount() + wordCount(rowText) > MAX_WORDS_PER_SLIDE ||
-          current!.bullets.length >= MAX_BULLETS_PER_SLIDE
-        ) {
-          flush();
-          current = { title: 'Continued (Table)', bullets: [] };
-        }
-        const isHeader = row.querySelector('th') !== null;
-        current!.bullets.push({ text: rowText, level: 0, bold: isHeader });
-      }
+    // Tables
+    if (tag === 'table' && el.tableData && el.tableData.length > 0) {
+      isFirstHeading = false;
+      flush();
+      sections.push({
+        title: current?.title || 'Data Table',
+        bullets: [],
+        table: el.tableData.slice(0, 10),
+      });
       continue;
     }
 
-    // Normal paragraphs — check for bold/italic inline
+    // Paragraphs
     if (tag === 'p' || tag === 'div' || tag === 'blockquote') {
       if (!text) continue;
+      isFirstHeading = false;
       ensureCurrent();
 
-      const hasBold = el.querySelector('strong, b') !== null;
-      const hasItalic = el.querySelector('em, i') !== null;
+      const hasBold = el.hasBold;
+      const hasItalic = el.hasItalic;
 
-      // Split long paragraphs into chunks of MAX_WORDS_PER_SLIDE words
       const words = text.split(/\s+/);
       let chunk: string[] = [];
       for (const word of words) {
         chunk.push(word);
         if (
-          chunk.length >= 25 || // hard max per bullet line (readable on slide)
+          chunk.length >= 25 ||
           currentWordCount() + chunk.length > MAX_WORDS_PER_SLIDE ||
           current!.bullets.length >= MAX_BULLETS_PER_SLIDE
         ) {
@@ -179,16 +339,22 @@ export function parseHtmlToSections(html: string, docTitle: string): SlideSectio
 
   flush();
 
-  // If the document had absolutely no structure, chunk raw text
   if (sections.length === 0) {
-    return [{ title: docTitle, bullets: [{ text: 'Document converted to presentation format.', level: 0 }] }];
+    sections.push({
+      title: 'Overview',
+      bullets: [{ text: 'Extracted document content successfully converted to slides.', level: 0 }],
+    });
   }
 
-  return sections;
+  return {
+    cover: detectedCover || defaultCover,
+    sections,
+  };
 }
 
 // ─── Split a single oversized section into multiple slides ─────────────────────
 function splitSectionIntoSlides(section: SlideSection): SlideSection[] {
+  if (section.table) return [section];
   if (section.bullets.length <= MAX_BULLETS_PER_SLIDE) {
     const wc = section.bullets.reduce((acc, b) => acc + b.text.split(/\s+/).length, 0);
     if (wc <= MAX_WORDS_PER_SLIDE) return [section];
@@ -220,49 +386,92 @@ function splitSectionIntoSlides(section: SlideSection): SlideSection[] {
 export async function renderSectionsToPptx(
   docTitle: string,
   sections: SlideSection[],
-  onProgress?: (pct: number, msg: string) => void
+  onProgress?: (pct: number, msg: string) => void,
+  coverInfo?: DocumentCoverInfo
 ): Promise<Blob> {
   const pres = new PptxGenJS();
   pres.layout = 'LAYOUT_16x9';
 
-  const totalSlides = sections.length + 1; // +1 for title slide
+  const title = coverInfo?.title || docTitle.replace(/\.[^/.]+$/, '').trim();
+  const subtitle = coverInfo?.subtitle || `${sections.length} slides · Formatted with ConvertX`;
+  const author = coverInfo?.author;
+  const date = coverInfo?.date || new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const totalSlides = sections.length + 1; // +1 for cover slide
   let slideIndex = 0;
 
-  // ── Title slide ──────────────────────────────────────────────────────────────
+  // ── Cover Slide ──────────────────────────────────────────────────────────────
   const titleSlide = pres.addSlide();
-  titleSlide.background = { color: '0F172A' };
+  titleSlide.background = { color: '0F172A' }; // Modern Dark Slate
 
-  titleSlide.addText(docTitle.replace(/\.[^/.]+$/, ''), {
+  // Left Accent Vertical Bar
+  titleSlide.addShape(pres.ShapeType.rect, {
     x: 0.8,
-    y: 1.8,
-    w: '85%',
-    h: 1.6,
-    fontSize: 36,
+    y: 1.5,
+    w: 0.15,
+    h: 3.8,
+    fill: { color: '3B82F6' }, // Royal Blue
+  });
+
+  // Main Document Title
+  titleSlide.addText(title, {
+    x: 1.2,
+    y: 1.5,
+    w: '80%',
+    h: 2.0,
+    fontSize: 34,
     bold: true,
     color: 'FFFFFF',
     fontFace: 'Arial',
     wrap: true,
   });
 
-  titleSlide.addText(`${sections.length} slides  ·  Converted by ConvertX`, {
-    x: 0.8,
-    y: 3.8,
+  // Subtitle
+  titleSlide.addText(subtitle, {
+    x: 1.2,
+    y: 3.6,
     w: '80%',
-    h: 0.5,
-    fontSize: 13,
-    color: '64748B',
+    h: 0.8,
+    fontSize: 16,
+    color: '94A3B8',
+    fontFace: 'Arial',
+    wrap: true,
+  });
+
+  // Author & Date metadata
+  const metaText = [author, date].filter(Boolean).join('  •  ');
+  if (metaText) {
+    titleSlide.addText(metaText, {
+      x: 1.2,
+      y: 4.5,
+      w: '80%',
+      h: 0.5,
+      fontSize: 13,
+      color: '64748B',
+      fontFace: 'Arial',
+    });
+  }
+
+  // Cover footer badge
+  titleSlide.addText('Converted with ConvertX • Presentation Engine', {
+    x: 1.2,
+    y: 6.8,
+    w: '60%',
+    h: 0.3,
+    fontSize: 9,
+    color: '475569',
     fontFace: 'Arial',
   });
 
   slideIndex++;
-  onProgress?.(Math.round((slideIndex / totalSlides) * 85), `Building slide 1 of ${totalSlides}...`);
+  onProgress?.(Math.round((slideIndex / totalSlides) * 85), `Building Slide 1 (Cover Page)...`);
 
-  // ── Content slides ───────────────────────────────────────────────────────────
+  // ── Content Slides ───────────────────────────────────────────────────────────
   for (const sec of sections) {
     const slide = pres.addSlide();
     slide.background = { color: 'F8FAFC' };
 
-    // Dark header banner
+    // Top Header Banner
     slide.addShape(pres.ShapeType.rect, {
       x: 0,
       y: 0,
@@ -271,11 +480,20 @@ export async function renderSectionsToPptx(
       fill: { color: '1E293B' },
     });
 
+    // Accent line under banner
+    slide.addShape(pres.ShapeType.rect, {
+      x: 0,
+      y: 1.05,
+      w: '100%',
+      h: 0.04,
+      fill: { color: '3B82F6' },
+    });
+
     // Slide title
     slide.addText(sec.title || 'Overview', {
-      x: 0.5,
+      x: 0.8,
       y: 0.18,
-      w: '90%',
+      w: '85%',
       h: 0.7,
       fontSize: 20,
       bold: true,
@@ -284,8 +502,30 @@ export async function renderSectionsToPptx(
       wrap: true,
     });
 
-    // Body bullets
-    if (sec.bullets.length > 0) {
+    // Render Table if section has a table
+    if (sec.table && sec.table.length > 0) {
+      const formattedRows = sec.table.map((row, rIdx) => {
+        const isHeader = rIdx === 0;
+        return row.map((cell) => ({
+          text: cell,
+          options: {
+            fill: { color: isHeader ? '1E293B' : rIdx % 2 === 0 ? 'F1F5F9' : 'FFFFFF' },
+            color: isHeader ? 'FFFFFF' : '334155',
+            bold: isHeader,
+            fontSize: isHeader ? 12 : 11,
+          },
+        }));
+      });
+
+      slide.addTable(formattedRows as any, {
+        x: 0.8,
+        y: 1.5,
+        w: 8.4,
+        border: { type: 'solid', pt: 1, color: 'CBD5E1' },
+        margin: 0.08,
+      });
+    } else if (sec.bullets.length > 0) {
+      // Body bullets
       const bulletItems = sec.bullets.map((b) => ({
         text: b.text,
         options: {
@@ -302,35 +542,35 @@ export async function renderSectionsToPptx(
       }));
 
       slide.addText(bulletItems as any, {
-        x: 0.5,
-        y: 1.2,
-        w: '92%',
-        h: 5.2,
+        x: 0.8,
+        y: 1.4,
+        w: '88%',
+        h: 5.0,
         fontFace: 'Arial',
         valign: 'top',
       });
     }
 
     // Slide number footer
-    slide.addText(`${slideIndex} / ${totalSlides - 1}`, {
-      x: 8.5,
+    slide.addText(`Slide ${slideIndex} of ${totalSlides - 1}`, {
+      x: 8.0,
       y: 6.8,
-      w: 1.2,
+      w: 1.8,
       h: 0.25,
-      fontSize: 8,
-      color: 'CBD5E1',
+      fontSize: 9,
+      color: '94A3B8',
       align: 'right',
     });
 
     slideIndex++;
-    if (slideIndex % 5 === 0) {
+    if (slideIndex % 3 === 0 || slideIndex === totalSlides) {
       onProgress?.(
         Math.round((slideIndex / totalSlides) * 85),
-        `Building slide ${slideIndex} of ${totalSlides}...`
+        `Building Slide ${slideIndex} of ${totalSlides}...`
       );
     }
   }
 
-  onProgress?.(90, 'Packaging PPTX file...');
+  onProgress?.(90, 'Packaging presentation file (.pptx)...');
   return (await pres.write({ outputType: 'blob' })) as Blob;
 }
