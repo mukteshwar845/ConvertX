@@ -9,7 +9,7 @@ import {
 import { TargetFormat } from '../types';
 
 interface BatchUploaderProps {
-  onFilesAdded: (files: File[]) => void;
+  onFilesAdded: (files: FileList | File[]) => void;
   queueLength: number;
   completedCount: number;
   isConvertingBatch: boolean;
@@ -98,14 +98,38 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
         </div>
       </div>
 
-      {/* Main Drag & Drop Zone */}
+      {/* Mobile-first primary file picker button */}
+      <button
+        id="choose-files-btn"
+        onClick={() => fileInputRef.current?.click()}
+        className="
+          w-full flex items-center justify-center gap-3
+          rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700
+          bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30
+          px-6 py-5 min-h-[72px]
+          text-base font-bold text-blue-700 dark:text-blue-300
+          hover:border-blue-400 dark:hover:border-blue-500
+          hover:from-blue-100/60 dark:hover:from-blue-900/40
+          active:scale-[0.98] transition-all duration-150
+          shadow-sm
+        "
+        aria-label="Choose files to convert"
+      >
+        <UploadCloud className="h-6 w-6 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+        <div className="text-left">
+          <div className="text-sm font-bold">Choose Files</div>
+          <div className="text-xs text-blue-600/70 dark:text-blue-400/70 font-medium">Documents · Images · Spreadsheets · PDFs</div>
+        </div>
+      </button>
+
+      {/* Desktop drag & drop zone — hidden on mobile */}
       <div
         id="drop-zone"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 sm:p-10 text-center transition-all duration-200 ${
+        className={`hidden sm:flex group relative cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
           isDragging
             ? 'border-blue-500 bg-blue-50/70 scale-[1.005] dark:border-blue-400 dark:bg-blue-950/30 shadow-lg shadow-blue-500/10'
             : 'border-slate-300/90 bg-white/80 hover:border-blue-400 hover:bg-blue-50/20 dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:border-blue-500/60 dark:hover:bg-slate-800/40 shadow-xs'
@@ -120,40 +144,36 @@ export const BatchUploader: React.FC<BatchUploaderProps> = ({
           className="hidden"
         />
 
-        {/* Upload Icon with animated gradient circle */}
         <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-110">
           <UploadCloud className="h-8 w-8" />
         </div>
 
-        <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+        <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
           Drag & Drop your files here, or{' '}
           <span className="text-blue-600 dark:text-blue-400 underline decoration-2 underline-offset-2">
             Browse Files
           </span>
         </h3>
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-md">
           Supports Documents, Spreadsheets, Presentations, Photos & Data files.
         </p>
 
-        {/* Visual Supported Formats Chips */}
         <div className="mt-5 flex flex-wrap justify-center gap-1.5 max-w-xl">
           {[
-            { label: 'PDF Document', ext: 'PDF', bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200/60 dark:border-rose-900/60' },
-            { label: 'Word Document', ext: 'DOCX', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/60' },
-            { label: 'Excel & Sheet', ext: 'XLSX / CSV', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/60' },
-            { label: 'PowerPoint', ext: 'PPTX', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/60' },
-            { label: 'Images', ext: 'PNG / JPG / WEBP', bg: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300 border-cyan-200/60 dark:border-cyan-900/60' },
-            { label: 'Text & Code', ext: 'MD / HTML / JSON', bg: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 border-violet-200/60 dark:border-violet-900/60' },
+            { ext: 'PDF', bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200/60 dark:border-rose-900/60' },
+            { ext: 'DOCX', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/60' },
+            { ext: 'XLSX / CSV', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-900/60' },
+            { ext: 'PPTX', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200/60 dark:border-amber-900/60' },
+            { ext: 'PNG / JPG / WEBP', bg: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300 border-cyan-200/60 dark:border-cyan-900/60' },
+            { ext: 'MD / HTML / JSON', bg: 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 border-violet-200/60 dark:border-violet-900/60' },
           ].map((fmt) => (
-            <span
-              key={fmt.ext}
-              className={`rounded-xl border px-2.5 py-1 text-[11px] font-bold ${fmt.bg}`}
-            >
+            <span key={fmt.ext} className={`rounded-xl border px-2.5 py-1 text-[11px] font-bold ${fmt.bg}`}>
               {fmt.ext}
             </span>
           ))}
         </div>
       </div>
+
 
 
       {/* Batch Control Toolbar (Active when files are queued) */}

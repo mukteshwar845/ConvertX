@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="border-t border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 transition-colors duration-200">
+    <footer className="hidden md:block border-t border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand & Mission */}

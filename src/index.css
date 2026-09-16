@@ -5,63 +5,158 @@
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Safe-area insets for notch/home-indicator devices */
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    /* Bottom nav height + safe area */
+    --bottom-nav-h: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    /* Prevent text size inflation on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     transition: background-color 0.25s ease, color 0.25s ease;
+    /* Prevent horizontal overflow on mobile */
+    overflow-x: hidden;
+  }
+
+  /* Minimum touch target — 44×44px per Apple HIG */
+  button, [role="button"], a, input[type="checkbox"], input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Override for icon-only tight buttons */
+  .touch-sm {
+    min-height: 36px;
+    min-width: 36px;
   }
 }
 
-/* Custom modern scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+/* ── Safe-area padding utilities ──────────────────────────────── */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pl-safe { padding-left: env(safe-area-inset-left, 0px); }
+.pr-safe { padding-right: env(safe-area-inset-right, 0px); }
+
+/* Space for fixed bottom nav on mobile */
+.main-content-mobile {
+  padding-bottom: var(--bottom-nav-h);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* ── Bottom Navigation ────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: var(--bottom-nav-h);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* ── Bottom Sheet ─────────────────────────────────────────────── */
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.18s ease;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 61;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: slideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Progress animations ──────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    #3b82f6 0%,
+    #6366f1 40%,
+    #3b82f6 80%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Pulse dot ────────────────────────────────────────────────── */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+.pulse-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+
+/* ── Card hover lift ──────────────────────────────────────────── */
+.card-lift {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -8px rgba(0,0,0,0.12);
+}
+.dark .card-lift:hover {
+  box-shadow: 0 8px 30px -8px rgba(0,0,0,0.5);
+}
+
+/* ── Custom modern scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.4);
   border-radius: 9999px;
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.7); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.5); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.5);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
-}
-
-/* Glassmorphism & glowing highlights */
+/* ── Glassmorphism ────────────────────────────────────────────── */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
-
 .dark .glass-panel {
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-.glow-blue {
-  box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25);
-}
+/* ── Glow effects ─────────────────────────────────────────────── */
+.glow-blue  { box-shadow: 0 0 25px -5px rgba(59,130,246,0.25); }
+.dark .glow-blue { box-shadow: 0 0 35px -5px rgba(59,130,246,0.35); }
 
-.dark .glow-blue {
-  box-shadow: 0 0 35px -5px rgba(59, 130, 246, 0.35);
-}

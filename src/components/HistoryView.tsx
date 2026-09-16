@@ -193,16 +193,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
       </div>
 
-
-
       {/* History Records List */}
       {filteredRecords.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
           <History className="mx-auto h-10 w-10 text-slate-400" />
           <h3 className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">
             {records.length === 0 ? 'No conversion history yet' : 'No matching records found'}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
             {records.length === 0
               ? 'Files you convert are logged here automatically. History is stored locally on this device only.'
               : 'Try adjusting your search terms or format filters.'}
@@ -217,49 +215,37 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             return (
               <div
                 key={rec.id}
-                className={`flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between ${
+                className={`card-lift rounded-2xl border bg-white dark:bg-slate-900 shadow-sm transition-all ${
                   isPendingDelete
                     ? 'border-rose-300 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-950/20'
-                    : 'border-slate-200 dark:border-slate-800'
+                    : 'border-slate-200/80 dark:border-slate-800/80'
                 }`}
               >
-                {/* Left File details */}
-                <div className="flex items-start gap-3 min-w-0">
+                {/* Card content */}
+                <div className="flex items-start gap-3 p-4">
+                  {/* Format icon */}
                   <div
-                    className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border ${visual.containerClass} ${
+                    className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl border ${visual.containerClass} ${
                       isPendingDelete ? 'opacity-50' : ''
                     }`}
                   >
                     {visual.icon}
                   </div>
 
+                  {/* File info */}
                   <div className={`min-w-0 flex-1 ${isPendingDelete ? 'opacity-60' : ''}`}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-bold text-slate-900 dark:text-white" title={rec.convertedName}>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="truncate text-sm font-bold text-slate-900 dark:text-white max-w-[200px]" title={rec.convertedName}>
                         {rec.convertedName}
                       </span>
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${visual.badgeClass}`}>
-                        {visual.shortLabel}
+                      <span className={`rounded-lg px-1.5 py-0.5 text-[10px] font-black uppercase ${visual.badgeClass}`}>
+                        {rec.sourceFormat.toUpperCase()} → {visual.shortLabel}
                       </span>
-                      {rec.cached && (
-                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/80">
-                          <Zap className="h-3 w-3 text-amber-500" />
-                          Cached
-                        </span>
-                      )}
-                      {rec.fidelityScore !== undefined && (
-                        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/80">
-                          <Sparkles className="h-3 w-3 text-emerald-500" />
-                          {rec.fidelityScore}% Fidelity
-                        </span>
-                      )}
                     </div>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span>From: {rec.originalName}</span>
-                      <span>•</span>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                       <span>{formatBytes(rec.convertedSize)}</span>
-                      <span>•</span>
+                      <span>·</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(rec.timestamp).toLocaleDateString([], {
@@ -269,35 +255,45 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                           minute: '2-digit',
                         })}
                       </span>
+                      {rec.fidelityScore !== undefined && (
+                        <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <Sparkles className="h-3 w-3" />
+                          {rec.fidelityScore}%
+                        </span>
+                      )}
+                      {rec.cached && (
+                        <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-semibold">
+                          <Zap className="h-3 w-3" />
+                          Cached
+                        </span>
+                      )}
                       {rec.ocrExtracted && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 dark:text-purple-400">
+                        <span className="inline-flex items-center gap-0.5 text-purple-600 dark:text-purple-400 font-semibold">
                           <ScanText className="h-3 w-3" />
-                          OCR Extracted
+                          OCR
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex items-center justify-end gap-2 shrink-0">
+                {/* Action row — full width, touch-friendly */}
+                <div className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 px-3 pb-3 pt-2">
                   {isPendingDelete ? (
-                    /* Inline Delete Confirmation */
-                    <div className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 dark:border-rose-800 dark:bg-rose-950/50">
+                    /* Delete confirmation */
+                    <div className="flex items-center gap-2 w-full rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3 py-2">
                       <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
-                      <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
-                        Remove this record?
-                      </span>
+                      <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 flex-1">Remove this record?</span>
                       <button
                         onClick={() => handleDeleteConfirm(rec.id)}
-                        className="flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-rose-700 active:scale-95 transition"
+                        className="flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-700 active:scale-95 transition min-h-[36px]"
                       >
-                        <Trash2 className="h-3 w-3" />
-                        Delete
+                        <Check className="h-3.5 w-3.5" />
+                        Yes
                       </button>
                       <button
                         onClick={handleDeleteCancel}
-                        className="flex items-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 transition"
+                        className="flex items-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 transition min-h-[36px] min-w-[36px] justify-center"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -306,25 +302,21 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     <>
                       <button
                         onClick={() => onPreviewRecord(rec)}
-                        className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
-                        title="Preview"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition min-h-[44px]"
                       >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Preview</span>
+                        <Eye className="h-4 w-4" />
+                        Preview
                       </button>
-
                       <button
                         onClick={() => onDownloadRecord(rec)}
-                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
-                        title="Download File"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition min-h-[44px]"
                       >
-                        <Download className="h-3.5 w-3.5" />
-                        <span>Download</span>
+                        <Download className="h-4 w-4" />
+                        Download
                       </button>
-
                       <button
                         onClick={() => handleDeleteClick(rec.id)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+                        className="flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition min-h-[44px] min-w-[44px]"
                         title="Delete from history"
                       >
                         <Trash2 className="h-4 w-4" />

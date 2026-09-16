@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import JSZip from 'jszip';
-import {
-  ShieldCheck,
-  Sparkles,
-  Minimize2,
-} from 'lucide-react';
+import { ShieldCheck, Sparkles, Minimize2 } from 'lucide-react';
 import {
   ConversionItem,
   HistoryRecord,
@@ -12,6 +8,7 @@ import {
   SupportedFormat,
 } from './types';
 import { Navbar, NavTab } from './components/Navbar';
+import { BottomNav, MobileTab } from './components/BottomNav';
 import { BatchUploader } from './components/BatchUploader';
 import { ConversionCard } from './components/ConversionCard';
 import { ImageConverterView } from './components/ImageConverterView';
@@ -23,6 +20,9 @@ import { PWAInstallModal } from './components/PWAInstallModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { Footer } from './components/Footer';
 import { ToastContainer, ToastMessage } from './components/Toast';
+import { HomeView } from './components/HomeView';
+import { SettingsView } from './components/SettingsView';
+import { OfflineBanner } from './components/OfflineBanner';
 import {
   detectFormat,
   convertDocument,
@@ -38,6 +38,9 @@ import {
   migrateFromLocalStorage,
 } from './utils/historyDB';
 
+// Sub-tool within Convert tab
+type ConvertSubTool = 'documents' | 'compress' | 'zip';
+
 export default function App() {
   // Theme state
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -46,8 +49,10 @@ export default function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Active navigation tab
-  const [activeTab, setActiveTab] = useState<NavTab>('documents');
+  // Active navigation tab — unified for mobile & desktop
+  const [activeTab, setActiveTab] = useState<NavTab>('home');
+  // Sub-tool within Convert tab
+  const [convertSubTool, setConvertSubTool] = useState<ConvertSubTool>('documents');
 
   const [globalTarget, setGlobalTarget] = useState<TargetFormat>('pdf');
   const [ocrEnabled, setOcrEnabled] = useState<boolean>(true);
@@ -66,7 +71,7 @@ export default function App() {
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isConvertingBatch, setIsConvertingBatch] = useState<boolean>(false);
 
-  // In-app non-blocking Toast Notifications (iframe resilient)
+  // In-app non-blocking Toast Notifications
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (
@@ -128,12 +133,21 @@ export default function App() {
     };
   }, []);
 
+  // Navigate to a tab, with optional sub-tool for Convert tab
+  const navigateTo = (tab: NavTab, subTool?: string) => {
+    setActiveTab(tab);
+    if (tab === 'convert' && subTool) {
+      setConvertSubTool(subTool as ConvertSubTool);
+    }
+  };
+
   // Add files to batch queue
-  const handleFilesAdded = (files: File[]) => {
+  const handleFilesAdded = (files: FileList | File[]) => {
+    const fileArr = Array.from(files);
     const validFiles: File[] = [];
     let emptyCount = 0;
 
-    for (const f of files) {
+    for (const f of fileArr) {
       if (f.size === 0) {
         emptyCount++;
       } else {
@@ -171,11 +185,13 @@ export default function App() {
     });
 
     setQueue((prev) => [...prev, ...newItems]);
-    setActiveTab('documents');
+    // Navigate to Convert tab when files are added
+    setActiveTab('convert');
+    setConvertSubTool('documents');
     addToast(
       'info',
-      `Queued ${newItems.length} file${newItems.length > 1 ? 's' : ''} for conversion.`,
-      'Batch Ready'
+      `${newItems.length} file${newItems.length > 1 ? 's' : ''} ready to convert.`,
+      'Files Added'
     );
   };
 
@@ -218,7 +234,7 @@ export default function App() {
         targetItem.targetFormat,
         {
           ocrEnabled: itemOcr,
-          onProgress: (prog, text) => {
+          onProgress: (prog, _text) => {
             setQueue((prev) =>
               prev.map((i) => (i.id === id ? { ...i, progress: prog } : i))
             );
@@ -229,7 +245,6 @@ export default function App() {
       const durationMs = Date.now() - startTime;
       const convertedUrl = URL.createObjectURL(result.blob);
 
-      // Update queue item
       setQueue((prev) =>
         prev.map((i) =>
           i.id === id
@@ -269,17 +284,22 @@ export default function App() {
         previewSnippet: result.preview.type === 'text' ? result.preview.content.slice(0, 300) : undefined,
       };
       setHistory((prev) => [histRecord, ...prev]);
-      // Persist to IndexedDB (device-local, no backend)
       dbSaveRecord(histRecord).catch((e) => console.warn('IndexedDB save failed:', e));
+
+      addToast('success', `${targetItem.originalName} converted successfully.`, 'Done');
     } catch (err: any) {
       console.error('Conversion error:', err);
+      const userMsg = err.message?.includes('empty')
+        ? err.message
+        : "We couldn't convert this file. Your original file is safe. Please try again.";
       setQueue((prev) =>
         prev.map((i) =>
           i.id === id
-            ? { ...i, status: 'error', progress: 0, errorMessage: err.message || 'Conversion failed' }
+            ? { ...i, status: 'error', progress: 0, errorMessage: userMsg }
             : i
         )
       );
+      addToast('error', userMsg, 'Conversion Failed');
     }
   };
 
@@ -293,8 +313,6 @@ export default function App() {
     setIsConvertingBatch(false);
   };
 
-  // Download Single File — uses robust helper to prevent timing-related download failures
-
   const handleDownloadItem = (item: ConversionItem) => {
     if (item.convertedBlob && item.convertedName) {
       triggerBlobDownload(item.convertedBlob, item.convertedName);
@@ -303,7 +321,6 @@ export default function App() {
     }
   };
 
-  // Batch Download as ZIP
   const handleDownloadAllZip = async () => {
     const completedItems = queue.filter((i) => i.status === 'completed' && i.convertedBlob);
     if (completedItems.length === 0) return;
@@ -320,35 +337,28 @@ export default function App() {
     addToast('success', `Created ZIP archive with ${completedItems.length} files.`, 'Batch Download');
   };
 
-  // Download record from history
   const handleDownloadRecord = (record: HistoryRecord) => {
     const queueMatch = queue.find((q) => q.id === record.id && q.convertedBlob);
     if (queueMatch && queueMatch.convertedBlob) {
       triggerBlobDownload(queueMatch.convertedBlob, record.convertedName);
       return;
     }
-
     addToast(
       'info',
-      'The converted file is no longer in memory. Please re-convert the file from the Converter tab.',
+      'The converted file is no longer in memory. Please re-convert it from the Convert tab.',
       'File Not Available'
     );
   };
 
-  // Remove from queue
   const handleRemoveQueueItem = (id: string) => {
     const item = queue.find((i) => i.id === id);
-    if (item?.convertedUrl) {
-      URL.revokeObjectURL(item.convertedUrl);
-    }
+    if (item?.convertedUrl) URL.revokeObjectURL(item.convertedUrl);
     setQueue((prev) => prev.filter((i) => i.id !== id));
   };
 
   const handleClearQueue = () => {
     queue.forEach((item) => {
-      if (item.convertedUrl) {
-        URL.revokeObjectURL(item.convertedUrl);
-      }
+      if (item.convertedUrl) URL.revokeObjectURL(item.convertedUrl);
     });
     setQueue([]);
     clearConversionCache();
@@ -356,14 +366,9 @@ export default function App() {
   };
 
   const handleDeleteHistoryRecord = async (id: string) => {
-    // Remove from queue memory (revoke any cached URL)
     const queueMatch = queue.find((q) => q.id === id);
-    if (queueMatch?.convertedUrl) {
-      URL.revokeObjectURL(queueMatch.convertedUrl);
-    }
-    // Update UI immediately
+    if (queueMatch?.convertedUrl) URL.revokeObjectURL(queueMatch.convertedUrl);
     setHistory((prev) => prev.filter((h) => h.id !== id));
-    // Delete from IndexedDB — no backend call
     try {
       await dbDeleteRecord(id);
     } catch (e) {
@@ -372,196 +377,269 @@ export default function App() {
   };
 
   const handleClearHistory = async () => {
-    // UI confirmation is handled inline in HistoryView — this handler just executes
     setHistory([]);
     try {
       await dbClearAllHistory();
     } catch (e) {
       console.warn('IndexedDB clear failed:', e);
     }
-    // Also wipe the old localStorage key if it somehow still exists
     localStorage.removeItem('docuconvert_history');
   };
 
-  // Native PWA install
   const handleNativeInstall = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const choice = await deferredPrompt.userChoice;
-    if (choice.outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
+    if (choice.outcome === 'accepted') setDeferredPrompt(null);
   };
 
+  const isInstallable = !!deferredPrompt || isIOS;
   const completedCount = queue.filter((i) => i.status === 'completed').length;
 
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
-      {/* Top Navigation */}
+      {/* Offline banner — fixed top */}
+      <OfflineBanner />
+
+      {/* Top Navigation (desktop / tablet) */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => navigateTo(tab)}
         isDark={isDark}
         setIsDark={setIsDark}
         historyCount={history.length}
-        isInstallable={!!deferredPrompt || isIOS}
+        isInstallable={isInstallable}
         onInstallClick={() => setShowInstallModal(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="mx-auto flex-1 w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Document Converter View */}
-        {activeTab === 'documents' && (
-          <div className="space-y-6">
-            {/* Hero Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-                    Document & File Converter
-                  </h1>
-                </div>
-                <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-                  Convert Word, PDF, Excel, PowerPoint, Text, and Data files instantly in your browser with 100% layout fidelity.
-                </p>
-              </div>
+      {/* Main Content — flex-1, has bottom padding on mobile for bottom nav */}
+      <main className="flex-1 w-full main-content-mobile md:pb-0">
+        {/* ── HOME ──────────────────────────────────────────────────── */}
+        {activeTab === 'home' && (
+          <HomeView
+            setActiveTab={(tab) => navigateTo(tab)}
+            onFilesAdded={handleFilesAdded}
+            isDark={isDark}
+            isInstallable={isInstallable}
+            onInstallClick={() => setShowInstallModal(true)}
+          />
+        )}
 
-              {/* Status Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                  <span>100% Private (No Uploads)</span>
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
-                  <Sparkles className="h-4 w-4 text-blue-500" />
-                  <span>High Fidelity Engine</span>
-                </span>
-              </div>
+        {/* ── CONVERT (documents + compress + zip sub-tools) ─────────── */}
+        {activeTab === 'convert' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            {/* Sub-tool switcher */}
+            <div className="flex gap-1 mb-5 rounded-2xl bg-slate-100 dark:bg-slate-800/70 p-1 border border-slate-200/60 dark:border-slate-700/60">
+              {([
+                { id: 'documents', label: '📄 Documents' },
+                { id: 'compress', label: '📦 Compress' },
+                { id: 'zip', label: '🗜 ZIP' },
+              ] as { id: ConvertSubTool; label: string }[]).map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setConvertSubTool(sub.id)}
+                  className={`flex-1 rounded-xl py-2 text-xs font-bold transition-all duration-150 min-h-[36px] ${
+                    convertSubTool === sub.id
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
             </div>
 
-            {/* Batch Uploader & Controls */}
-            <BatchUploader
-              onFilesAdded={handleFilesAdded}
-              queueLength={queue.length}
-              completedCount={completedCount}
-              isConvertingBatch={isConvertingBatch}
-              onConvertAll={handleConvertAll}
-              onDownloadZip={handleDownloadAllZip}
-              onClearAll={handleClearQueue}
-              globalTarget={globalTarget}
-              onGlobalTargetChange={(tgt) => {
-                setGlobalTarget(tgt);
-                setQueue((prev) =>
-                  prev.map((i) => {
-                    const targets = getAvailableTargets(i.sourceFormat, ocrEnabled);
-                    return targets.includes(tgt) ? { ...i, targetFormat: tgt } : i;
-                  })
-                );
-              }}
-              ocrEnabled={ocrEnabled}
-              onOcrToggle={handleOcrToggle}
-            />
-
-            {/* Queue Cards */}
-            {queue.length > 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <span>Selected Files ({queue.length})</span>
-                  <span>{completedCount} of {queue.length} ready</span>
+            {/* Documents sub-tool */}
+            {convertSubTool === 'documents' && (
+              <div className="space-y-4">
+                {/* Page header — desktop */}
+                <div className="hidden md:flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-2">
+                  <div>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                      Document Converter
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      Convert Word, PDF, Excel, PowerPoint, and more — entirely in your browser.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      100% Private
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                      High Fidelity
+                    </span>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  {queue.map((item) => (
-                    <ConversionCard
-                      key={item.id}
-                      item={item}
-                      onTargetChange={handleTargetChange}
-                      onConvertSingle={convertSingle}
-                      onDownload={handleDownloadItem}
-                      onPreview={(itm) => handleOpenPreview(itm, 'preview')}
-                      onCompare={(itm) => handleOpenPreview(itm, 'compare')}
-                      onRemove={handleRemoveQueueItem}
-                    />
-                  ))}
-                </div>
+                {/* Batch Uploader */}
+                <BatchUploader
+                  onFilesAdded={handleFilesAdded}
+                  queueLength={queue.length}
+                  completedCount={completedCount}
+                  isConvertingBatch={isConvertingBatch}
+                  onConvertAll={handleConvertAll}
+                  onDownloadZip={handleDownloadAllZip}
+                  onClearAll={handleClearQueue}
+                  globalTarget={globalTarget}
+                  onGlobalTargetChange={(tgt) => {
+                    setGlobalTarget(tgt);
+                    setQueue((prev) =>
+                      prev.map((i) => {
+                        const targets = getAvailableTargets(i.sourceFormat, ocrEnabled);
+                        return targets.includes(tgt) ? { ...i, targetFormat: tgt } : i;
+                      })
+                    );
+                  }}
+                  ocrEnabled={ocrEnabled}
+                  onOcrToggle={handleOcrToggle}
+                />
+
+                {/* Queue Cards */}
+                {queue.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400 px-1">
+                      <span>{queue.length} file{queue.length !== 1 ? 's' : ''} selected</span>
+                      <span>{completedCount} of {queue.length} converted</span>
+                    </div>
+                    {queue.map((item) => (
+                      <ConversionCard
+                        key={item.id}
+                        item={item}
+                        onTargetChange={handleTargetChange}
+                        onConvertSingle={convertSingle}
+                        onDownload={handleDownloadItem}
+                        onPreview={(itm) => handleOpenPreview(itm, 'preview')}
+                        onCompare={(itm) => handleOpenPreview(itm, 'compare')}
+                        onRemove={handleRemoveQueueItem}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Desktop feature grid — only when queue is empty */}
+                {queue.length === 0 && (
+                  <div className="hidden md:grid grid-cols-3 gap-4 pt-4 mt-4 border-t border-slate-200/80 dark:border-slate-800/80">
+                    {[
+                      { icon: <Sparkles className="h-4 w-4" />, color: 'text-blue-600 dark:text-blue-400', title: 'High Quality & Formatting', desc: 'Preserves typography, lists, headings, tables, and colors across all conversions.' },
+                      { icon: <ShieldCheck className="h-4 w-4" />, color: 'text-emerald-600 dark:text-emerald-400', title: '100% Client-Side Privacy', desc: 'Files are processed directly inside your browser. Nothing is ever uploaded.' },
+                      { icon: <Minimize2 className="h-4 w-4" />, color: 'text-indigo-600 dark:text-indigo-400', title: 'File Compression & ZIP', desc: 'Reduce file sizes by up to 85% or package files into ZIP archives.' },
+                    ].map((f) => (
+                      <div key={f.title} className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-sm">
+                        <div className={`flex items-center gap-2 font-bold text-xs uppercase tracking-wider ${f.color}`}>
+                          {f.icon}
+                          <span>{f.title}</span>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{f.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Feature Highlights Bento */}
-            <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-slate-200/80 dark:border-slate-800/80">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
-                  <Sparkles className="h-4 w-4" />
-                  <span>High Quality & Formatting</span>
-                </div>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Preserves typography, lists, headings, tables, and colors so your output document looks clean and professional.
-                </p>
-              </div>
+            {/* Compress sub-tool */}
+            {convertSubTool === 'compress' && (
+              <FileCompressView
+                onAddToHistory={(rec) => {
+                  setHistory((prev) => [rec, ...prev]);
+                  dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+                }}
+                addToast={addToast}
+              />
+            )}
 
-              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span>100% Client-Side Privacy</span>
-                </div>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Files are processed directly inside your browser. No third-party servers see or store your private documents.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 dark:border-slate-800/80 dark:bg-slate-900/60 shadow-2xs backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase tracking-wider">
-                  <Minimize2 className="h-4 w-4" />
-                  <span>File Compression & ZIP</span>
-                </div>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Reduce image, PDF, and office file sizes by up to 85% directly in your browser, or package files and folders into ZIP archives.
-                </p>
-              </div>
-            </div>
+            {/* ZIP sub-tool */}
+            {convertSubTool === 'zip' && <ZipCreatorView />}
           </div>
         )}
 
-        {/* Image Converter View */}
+        {/* ── IMAGES ─────────────────────────────────────────────────── */}
         {activeTab === 'images' && (
-          <ImageConverterView
-            onAddToHistory={(rec) => {
-              setHistory((prev) => [rec, ...prev]);
-              dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
-            }}
-            addToast={addToast}
-          />
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <ImageConverterView
+              onAddToHistory={(rec) => {
+                setHistory((prev) => [rec, ...prev]);
+                dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+              }}
+              addToast={addToast}
+            />
+          </div>
         )}
 
-        {/* Compress Files View */}
-        {activeTab === 'compress' && (
-          <FileCompressView
-            onAddToHistory={(rec) => {
-              setHistory((prev) => [rec, ...prev]);
-              dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
-            }}
-            addToast={addToast}
-          />
-        )}
-
-        {/* Zip Creator View */}
-        {activeTab === 'zip' && <ZipCreatorView />}
-
-        {/* History View */}
+        {/* ── HISTORY ────────────────────────────────────────────────── */}
         {activeTab === 'history' && (
-          <HistoryView
-            records={history}
-            isLoading={!historyLoaded}
-            onDownloadRecord={handleDownloadRecord}
-            onPreviewRecord={(rec) => setPreviewItem(rec)}
-            onDeleteRecord={handleDeleteHistoryRecord}
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <HistoryView
+              records={history}
+              isLoading={!historyLoaded}
+              onDownloadRecord={handleDownloadRecord}
+              onPreviewRecord={(rec) => setPreviewItem(rec)}
+              onDeleteRecord={handleDeleteHistoryRecord}
+              onClearHistory={handleClearHistory}
+              onDownloadAllZip={handleDownloadAllZip}
+            />
+          </div>
+        )}
+
+        {/* ── SETTINGS ───────────────────────────────────────────────── */}
+        {activeTab === 'settings' && (
+          <SettingsView
+            isDark={isDark}
+            setIsDark={setIsDark}
+            historyCount={history.length}
             onClearHistory={handleClearHistory}
-            onDownloadAllZip={handleDownloadAllZip}
+            onOpenPrivacyModal={() => setShowPrivacyModal(true)}
+            setActiveTab={(tab) => navigateTo(tab)}
+            isInstallable={isInstallable}
+            onInstallClick={() => setShowInstallModal(true)}
+            onNavigateTo={(tab, subTool) => navigateTo(tab, subTool)}
           />
+        )}
+
+        {/* Legacy desktop tabs — compress & zip accessible via desktop nav */}
+        {activeTab === 'compress' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <FileCompressView
+              onAddToHistory={(rec) => {
+                setHistory((prev) => [rec, ...prev]);
+                dbSaveRecord(rec).catch((e) => console.warn('IndexedDB save failed:', e));
+              }}
+              addToast={addToast}
+            />
+          </div>
+        )}
+        {activeTab === 'zip' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <ZipCreatorView />
+          </div>
+        )}
+        {/* Legacy documents tab — handled by 'convert' now, redirect */}
+        {activeTab === 'documents' && (
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            {/* Redirect legacy URL */}
+            {(() => { setActiveTab('convert'); return null; })()}
+          </div>
         )}
       </main>
 
-      {/* Preview Modal */}
+      {/* Fixed bottom nav — mobile only */}
+      <BottomNav
+        activeTab={activeTab as MobileTab}
+        setActiveTab={(tab) => navigateTo(tab)}
+        historyCount={history.length}
+      />
+
+      {/* Footer — desktop only */}
+      <Footer
+        onNavigateTab={(tab) => navigateTo(tab)}
+        onOpenPrivacyModal={() => setShowPrivacyModal(true)}
+      />
+
+      {/* Modals */}
       <PreviewModal
         item={previewItem}
         initialMode={previewMode}
@@ -575,7 +653,6 @@ export default function App() {
         }}
       />
 
-      {/* PWA Install Modal */}
       <PWAInstallModal
         isOpen={showInstallModal}
         onClose={() => setShowInstallModal(false)}
@@ -584,16 +661,8 @@ export default function App() {
         canNativeInstall={!!deferredPrompt}
       />
 
-      {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
-      {/* Professional Multi-Column Footer */}
-      <Footer
-        onNavigateTab={setActiveTab}
-        onOpenPrivacyModal={() => setShowPrivacyModal(true)}
-      />
-
-      {/* Privacy Policy & Legal Terms Modal */}
       <PrivacyPolicyModal
         isOpen={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
