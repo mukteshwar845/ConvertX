@@ -98,36 +98,6 @@
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-Ensure you have [Node.js](https://nodejs.org/) (version 18 or higher) and [npm](https://www.npmjs.com/) installed on your machine.
-
-## 🧪 Testing & Production Build
-
-- **Typecheck & Linting**:
-  ```bash
-  npm run lint
-  ```
-
-- **Run Automated Test Suite**:
-  ```bash
-  npx tsx tests/full_system_test.ts
-  ```
-
-- **Compile Production Bundle**:
-  ```bash
-  npm run build
-  ```
-
-- **Run Production Server**:
-  ```bash
-  npm start
-  ```
-
----
-
 ## 📁 Project Structure
 
 ```text
