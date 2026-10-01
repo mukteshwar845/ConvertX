@@ -104,29 +104,6 @@
 
 Ensure you have [Node.js](https://nodejs.org/) (version 18 or higher) and [npm](https://www.npmjs.com/) installed on your machine.
 
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/mukteshwar845/ConvertX.git
-   cd ConvertX
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the local development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**:
-   Navigate to [http://localhost:3000](http://localhost:3000) to use ConvertX.
-
----
-
 ## 🧪 Testing & Production Build
 
 - **Typecheck & Linting**:
